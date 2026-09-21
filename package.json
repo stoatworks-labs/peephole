@@ -1,0 +1,29 @@
+{
+  "name": "peephole",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A camera or capture card, full screen, in a browser tab — device and mode picker, mirror, rotate, fit or fill, and a screen that stays awake.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && npx wrangler deploy",
+    "serve:dist": "python3 scripts/serve-dist.py --dir dist --port 4326",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^6.1.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
+  }
+}

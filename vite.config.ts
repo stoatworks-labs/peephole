@@ -1,0 +1,21 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+import { readFileSync } from 'node:fs'
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
+
+// Static SPA; dist/ is what Cloudflare serves.
+//
+// `base: './'` so the built page also works opened from a file or served from
+// a subdirectory — useful when someone keeps a copy on a show laptop rather
+// than relying on the hosted one.
+export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(`v${pkg.version}`) },
+  plugins: [react()],
+  base: './',
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+  },
+})

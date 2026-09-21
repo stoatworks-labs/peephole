@@ -1,0 +1,28 @@
+# Cloudflare deployment for Peephole.
+#
+# A static-assets-only Worker: no server code, and there could not be one that
+# mattered — the picture never leaves the browser.
+#
+# `public/_headers` is copied into dist/ by Vite and carries the CSP and the
+# immutable-cache rule for hashed assets; the assets runtime honours it. Note
+# the Permissions-Policy there: `camera=(self)` is what lets getUserMedia run
+# at all on this origin.
+#
+# `name` must match the Cloudflare project.
+
+name = "peephole"
+compatibility_date = "2026-09-21"
+
+[assets]
+directory = "./dist"
+
+# The custom domain is declared here rather than clicked into the dashboard, so
+# the routing is in the repo and a fresh deploy reproduces it. Same shape as
+# negative-space and arraycad.
+#
+# Note this silently disables the workers.dev URL — wrangler defaults
+# `workers_dev` to false once routes exist — so *.workers.dev links to this app
+# 404 from the first deploy that carries this block.
+[[routes]]
+pattern = "peephole.stoatworks-labs.com"
+custom_domain = true

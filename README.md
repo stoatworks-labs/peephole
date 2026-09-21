@@ -98,6 +98,10 @@ npm run build     # tsc -b && vite build, into dist/
 `dist/` is a static bundle — any web server will do, and `base` is relative so
 it also works from a subdirectory or a folder on a show laptop.
 
+<!-- attributions:start -->
+This project is built on other people's work — see [ATTRIBUTIONS.md](ATTRIBUTIONS.md).
+<!-- attributions:end -->
+
 ## Licence
 
 MIT. See [LICENSE](LICENSE).

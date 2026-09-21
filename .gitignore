@@ -3,3 +3,6 @@ dist/
 .wrangler/
 *.tsbuildinfo
 .DS_Store
+
+# one-off scratch script, kept outside the repo
+register.py

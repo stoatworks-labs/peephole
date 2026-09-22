@@ -19,6 +19,60 @@ goes from the device to the screen and stops there — no server is involved, an
 there is nothing in this app that could send it anywhere. The desktop build goes
 further and cannot open a network connection at all.
 
+<!-- downloads:start -->
+
+## Download
+
+**[v0.1.0](https://github.com/stoatworks-labs/peephole/releases/tag/v0.1.0)** — prebuilt for macOS, Windows and Linux. Pick your platform:
+
+<details>
+<summary><b>macOS</b> — Universal (Apple Silicon + Intel), Apple Silicon</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`peephole-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-macos-universal.dmg) | 229 MB |
+| Apple Silicon · .dmg disk image | [`peephole-0.1.0-macos-arm64.dmg`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-macos-arm64.dmg) | 127 MB |
+| Universal (Apple Silicon + Intel) · .pkg installer | [`peephole-0.1.0-macos-universal.pkg`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-macos-universal.pkg) | 229 MB |
+| Apple Silicon · .pkg installer | [`peephole-0.1.0-macos-arm64.pkg`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-macos-arm64.pkg) | 127 MB |
+| Universal (Apple Silicon + Intel) · .zip archive | [`peephole-0.1.0-macos-universal.zip`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-macos-universal.zip) | 228 MB |
+| Apple Silicon · .zip archive | [`peephole-0.1.0-macos-arm64.zip`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-macos-arm64.zip) | 127 MB |
+
+</details>
+
+<details>
+<summary><b>Windows</b> — x64 & ARM64, x64, ARM64</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| x64 & ARM64 · .exe installer | [`peephole-0.1.0-windows-setup.exe`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-windows-setup.exe) | 216 MB |
+| x64 · .exe installer | [`peephole-0.1.0-windows-x64-setup.exe`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-windows-x64-setup.exe) | 112 MB |
+| ARM64 · .exe installer | [`peephole-0.1.0-windows-arm64-setup.exe`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-windows-arm64-setup.exe) | 105 MB |
+| x64 & ARM64 · portable .exe | [`peephole-0.1.0-windows-portable.exe`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-windows-portable.exe) | 216 MB |
+| x64 · portable .exe | [`peephole-0.1.0-windows-x64-portable.exe`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-windows-x64-portable.exe) | 111 MB |
+| ARM64 · portable .exe | [`peephole-0.1.0-windows-arm64-portable.exe`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-windows-arm64-portable.exe) | 105 MB |
+
+</details>
+
+<details>
+<summary><b>Linux</b> — x64, ARM64</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| x64 · .deb package (Debian/Ubuntu) | [`peephole-0.1.0-linux-amd64.deb`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-linux-amd64.deb) | 100 MB |
+| ARM64 · .deb package (Debian/Ubuntu) | [`peephole-0.1.0-linux-arm64.deb`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-linux-arm64.deb) | 95 MB |
+| x64 · .rpm package (Fedora/RHEL) | [`peephole-0.1.0-linux-x86_64.rpm`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-linux-x86_64.rpm) | 89 MB |
+| ARM64 · .rpm package (Fedora/RHEL) | [`peephole-0.1.0-linux-aarch64.rpm`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-linux-aarch64.rpm) | 84 MB |
+| x64 · AppImage | [`peephole-0.1.0-linux-x86_64.AppImage`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-linux-x86_64.AppImage) | 125 MB |
+| ARM64 · AppImage | [`peephole-0.1.0-linux-arm64.AppImage`](https://github.com/stoatworks-labs/peephole/releases/download/v0.1.0/peephole-0.1.0-linux-arm64.AppImage) | 126 MB |
+
+</details>
+
+All builds, checksums and release notes: [github.com/stoatworks-labs/peephole/releases](https://github.com/stoatworks-labs/peephole/releases).
+
+macOS builds are signed and notarised and open normally. The Windows builds are unsigned, so SmartScreen warns once.
+
+<!-- downloads:end -->
+
 ## What it does that a bare `getUserMedia` page does not
 
 - **Gives a capture card its real resolution.** A UVC card advertises a list of

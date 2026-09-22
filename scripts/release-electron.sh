@@ -57,8 +57,18 @@ rm -rf "$out"; mkdir -p "$out"
 echo "==> npm install"
 npm install --silent --no-audit --no-fund
 
-echo "==> electron-vite build"
-npm run build
+# Compile the shell. `npm run build` is the Electron build in every repo that
+# has only that shape — but in a repo that is ALSO a hosted site, `build` is the
+# website, and compiling it here would leave electron-builder packaging whatever
+# happened to be in out/ from last time. So prefer an explicit `electron:build`
+# where the repo defines one. peephole is the first; the others are unaffected.
+if node -e "process.exit(require('./package.json').scripts?.['electron:build'] ? 0 : 1)" 2>/dev/null; then
+  echo "==> electron:build"
+  npm run electron:build
+else
+  echo "==> electron-vite build"
+  npm run build
+fi
 
 # Some projects (the presentation-commander pair) create space-free
 # vendor-sdk symlinks under native/ that point outside the project tree.
@@ -87,7 +97,19 @@ eb() {
 # processes that actually JIT).
 mac_sign_args=()
 if rl_mac_sign_ready; then
-  mac_sign_args+=(-c.mac.identity="$RL_MAC_SIGN_IDENTITY" -c.mac.hardenedRuntime=true)
+  # electron-builder wants the certificate's common name WITHOUT the
+  # "Developer ID Application: " prefix, and refuses outright when it is there:
+  #
+  #   ⨯ Please remove prefix "Developer ID Application:" from the specified
+  #     name — appropriate certificate will be chosen automatically
+  #
+  # RL_MAC_SIGN_IDENTITY carries the prefix because every other path in the
+  # fleet hands it straight to `codesign -s`, which requires it. Strip it for
+  # this one consumer. Until 2026-09-22 this aborted every Electron release
+  # that tried to sign, so no Electron repo had ever produced a Developer ID
+  # build from this Mac — they all shipped ad-hoc.
+  mac_sign_args+=(-c.mac.identity="${RL_MAC_SIGN_IDENTITY#Developer ID Application: }"
+                  -c.mac.hardenedRuntime=true)
   if [[ -n "${RL_MAC_ENTITLEMENTS:-}" && -f "${RL_MAC_ENTITLEMENTS:-}" ]]; then
     mac_sign_args+=(-c.mac.entitlements="$RL_MAC_ENTITLEMENTS"
                     -c.mac.entitlementsInherit="$RL_MAC_ENTITLEMENTS")

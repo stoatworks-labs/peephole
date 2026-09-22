@@ -98,12 +98,17 @@ one. If you do not want to think about it, take the first row.
 The Windows `-portable.exe` files are the same builds with no installer, for
 running from a USB stick.
 
-macOS builds are **ad-hoc signed, not notarised**, so Gatekeeper will refuse the
-first launch. After dragging it to Applications:
+**The published macOS builds are Developer ID signed and notarised**, so they
+open normally — no quarantine step, no right-click-Open. A build you make
+yourself with `npm run dist` is ad-hoc signed instead (that is what
+`identity: '-'` in `electron-builder.yml` is for), and Gatekeeper refuses those
+on first launch unless you strip the quarantine flag:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/Peephole.app
 ```
+
+Windows installers are unsigned, so SmartScreen will warn on first run.
 
 The first time you press Start, macOS and Windows will ask for camera access.
 If you say no, the app cannot ask again — the setting then lives in **System

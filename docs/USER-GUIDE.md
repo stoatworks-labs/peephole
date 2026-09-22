@@ -97,15 +97,12 @@ It is not a browser pointed at the website. There is no page being fetched and
 no local server; the whole application is inside the download, and it cannot
 reach the network even if you ask it to.
 
-**On macOS, the first launch will be refused.** The app is signed, but not with
-a paid Apple certificate, so Gatekeeper treats it as unidentified. After
-dragging it into Applications, open Terminal and run:
+**On macOS it just opens.** The download is signed with an Apple Developer ID
+and notarised by Apple, so there is no warning to click through and nothing to
+run in Terminal. Drag it into Applications and open it.
 
-```
-xattr -dr com.apple.quarantine /Applications/Peephole.app
-```
-
-Then open it normally.
+**On Windows, SmartScreen will warn you** the first time, because the installer
+is not signed. *More info* then *Run anyway*.
 
 **The first Start asks for the camera**, and that permission belongs to the
 operating system rather than to Peephole. If you refuse it, the app cannot ask

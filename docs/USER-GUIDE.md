@@ -81,11 +81,17 @@ The same tool, installed, for a machine that has no route to the internet or
 should not be using one. Downloads are on the
 [releases page](https://github.com/stoatworks-labs/peephole/releases).
 
-| | |
-| --- | --- |
-| macOS | `.dmg` — take *universal* unless you know you want the smaller *arm64* |
-| Windows | `-setup.exe` to install, `-portable.exe` to run from a USB stick |
-| Linux | `.AppImage` (download, make executable, run), `.deb`, `.rpm` |
+Each platform has a build that runs on anything and a smaller one for a single
+processor type. Take the first column unless you know which machine you have.
+
+| | Runs on anything | Smaller |
+| --- | --- | --- |
+| macOS | `macos-universal.dmg` | `macos-arm64.dmg`, Apple Silicon only |
+| Windows | `windows-setup.exe` | `windows-x64-setup.exe`, or `-arm64-` |
+| Linux | `linux-x86_64.AppImage` — download, make it executable, run | `.deb`, `.rpm` |
+
+The Windows `-portable.exe` files are the same thing without an installer, for
+running from a USB stick.
 
 It is not a browser pointed at the website. There is no page being fetched and
 no local server; the whole application is inside the download, and it cannot

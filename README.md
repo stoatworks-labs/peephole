@@ -86,11 +86,17 @@ besides. Both halves are verified in the test run below.
 
 Downloads are on the [releases page](https://github.com/stoatworks-labs/peephole/releases).
 
-| | |
-| --- | --- |
-| macOS | `.dmg` — `universal` for any Mac, `arm64` if you want the smaller one |
-| Windows | `-setup.exe` to install, or `-portable.exe` to run from a stick |
-| Linux | `.AppImage` (nothing to install), `.deb`, `.rpm` |
+Every platform gets a build that runs anywhere and a smaller single-architecture
+one. If you do not want to think about it, take the first row.
+
+| | Runs on anything | Smaller |
+| --- | --- | --- |
+| macOS | `macos-universal.dmg` (224 MB) | `macos-arm64.dmg` (128 MB), Apple Silicon only |
+| Windows | `windows-setup.exe` (206 MB) | `windows-x64-setup.exe` (107 MB) or `windows-arm64-setup.exe` |
+| Linux | `linux-x86_64.AppImage` (121 MB) — nothing to install | `.deb` and `.rpm`, x64 and arm64 |
+
+The Windows `-portable.exe` files are the same builds with no installer, for
+running from a USB stick.
 
 macOS builds are **ad-hoc signed, not notarised**, so Gatekeeper will refuse the
 first launch. After dragging it to Applications:
@@ -145,7 +151,8 @@ Read this as the authority on what has actually been checked.
 | Against a **real camera** | ⚠️ **not yet, in either shape** — the automated browser this was built in blocks camera access by policy |
 | Against a **real capture card** | ⚠️ **not yet, in either shape** |
 | Full screen | ✅ in the desktop app (real window full screen) · ⚠️ in a browser, exercised only in a windowed pane |
-| Windows and Linux builds | ⚠️ they package, and CI builds them on their own runners — but no one has **launched** them on Windows or Linux |
+| Packaging | ✅ all 16 artefacts cross-built from one Mac — macOS universal + arm64, Windows x64/arm64/combined, Linux AppImage + deb + rpm on both arches. The universal gate walks all 13 Mach-O files in the bundle; the `.dmg` mounts, verifies and carries the camera usage string |
+| The Windows and Linux builds **running** | ⚠️ **not yet** — they package cleanly and the macOS one has been driven end to end, but nobody has launched the Windows or Linux artefacts on Windows or Linux |
 
 The capture-card behaviour is the whole point of the tool and is the part that
 has not met hardware. Chromium's fake device proves the code path — it really

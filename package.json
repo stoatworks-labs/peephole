@@ -3,8 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "A camera or capture card, full screen, in a browser tab — device and mode picker, mirror, rotate, fit or fill, and a screen that stays awake.",
+  "main": "out/main/index.cjs",
+  "description": "A camera or capture card, full screen — device and mode picker, mirror, rotate, fit or fill, and a screen that stays awake. In a browser tab, or as an offline desktop app.",
+  "author": "Allan Sargeant",
   "license": "MIT",
+  "homepage": "https://peephole.stoatworks-labs.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stoatworks-labs/peephole.git"
+  },
+  "desktopName": "peephole.desktop",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -12,16 +20,27 @@
     "deploy": "npm run build && npx wrangler deploy",
     "serve:dist": "python3 scripts/serve-dist.py --dir dist --port 4326",
     "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "dependencies": {
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "test:watch": "vitest",
+    "icon": "node scripts/make-app-icon.mjs",
+    "icon:check": "node scripts/make-app-icon.mjs --check",
+    "electron:typecheck": "tsc -p tsconfig.electron.json",
+    "electron:build": "npm run electron:typecheck && vite build -c vite.electron.node.config.ts && vite build -c vite.electron.renderer.config.ts",
+    "electron:start": "install-electron && electron .",
+    "electron:run": "npm run electron:build && npm run electron:start",
+    "dist": "npm run electron:build && electron-builder --publish never",
+    "dist:mac": "npm run electron:build && electron-builder --mac --publish never",
+    "dist:win": "npm run electron:build && electron-builder --win --publish never",
+    "dist:linux": "npm run electron:build && electron-builder --linux --publish never"
   },
   "devDependencies": {
+    "@types/node": "^26.4.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "@vitejs/plugin-react": "^6.1.0",
+    "electron": "^44.4.3",
+    "electron-builder": "^26.15.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
     "vitest": "^5.0.1"

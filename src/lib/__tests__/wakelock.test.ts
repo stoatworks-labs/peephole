@@ -62,3 +62,36 @@ group('createWakeLock', () => {
     await expect(lock.acquire()).resolves.toBe(false)
   })
 })
+
+group('createWakeLock, in the desktop app', () => {
+  it('uses the power-save blocker even where the browser API is missing', async () => {
+    const keepDisplayAwake = vi.fn().mockResolvedValue(true)
+    const lock = createWakeLock({} as Navigator, fakeDoc(), { keepDisplayAwake })
+    // No caption about the screen possibly sleeping: on the desktop it will not.
+    expect(lock.supported).toBe(true)
+    await expect(lock.acquire()).resolves.toBe(true)
+    expect(keepDisplayAwake).toHaveBeenCalledWith(true)
+    await lock.release()
+    expect(keepDisplayAwake).toHaveBeenLastCalledWith(false)
+  })
+
+  it('is not re-taken when the window hides, because it was never dropped', async () => {
+    const keepDisplayAwake = vi.fn().mockResolvedValue(true)
+    const doc = fakeDoc()
+    const lock = createWakeLock({} as Navigator, doc, { keepDisplayAwake })
+    await lock.acquire()
+    doc.fire()
+    await Promise.resolve()
+    // The whole reason the desktop path exists: powerSaveBlocker belongs to the
+    // process, not to a visible document, so the browser's re-take dance is
+    // both unnecessary and absent.
+    expect(keepDisplayAwake).toHaveBeenCalledTimes(1)
+  })
+
+  it('survives a bridge that throws', async () => {
+    const keepDisplayAwake = vi.fn().mockRejectedValue(new Error('gone'))
+    const lock = createWakeLock({} as Navigator, fakeDoc(), { keepDisplayAwake })
+    await expect(lock.acquire()).resolves.toBe(false)
+    await expect(lock.release()).resolves.toBeUndefined()
+  })
+})

@@ -11,6 +11,7 @@ import {
   type Device,
   type Mode,
 } from './lib/devices'
+import { blockedHint, getDesktop, startNote, type Platform } from './lib/desktop'
 import { chooseDevice, loadSettings, nextRotation, saveSettings, transformFor, type Settings } from './lib/view'
 import { createWakeLock } from './lib/wakelock'
 
@@ -20,14 +21,22 @@ type Status =
   | { kind: 'live' }
   | { kind: 'error'; message: string; hint?: string }
 
-/** getUserMedia's errors, in words that say what to do about them. */
-function explain(err: unknown): { message: string; hint?: string } {
+/**
+ * getUserMedia's errors, in words that say what to do about them.
+ *
+ * `platform` is null in a browser and the OS's name in the desktop app. It only
+ * changes where the user is sent, but that is the difference between advice
+ * that works and advice that names a control the app does not have.
+ */
+function explain(err: unknown, platform: Platform | null): { message: string; hint?: string } {
   const e = err as { name?: string; message?: string }
   switch (e?.name) {
     case 'NotAllowedError':
       return {
-        message: 'The browser blocked access to the camera.',
-        hint: 'Allow camera access for this site — the padlock in the address bar — then press Start again.',
+        message: platform
+          ? 'Access to the camera was blocked.'
+          : 'The browser blocked access to the camera.',
+        hint: blockedHint(platform),
       }
     case 'NotFoundError':
     case 'OverconstrainedError':
@@ -73,7 +82,10 @@ export default function App() {
   // dependency, which would rebuild it on every mirror or rotate.
   const settingsRef = useRef(settings)
   settingsRef.current = settings
-  const wakeLock = useMemo(() => createWakeLock(), [])
+  // null in a browser tab; the Electron shell's bridge in the desktop app.
+  const desktop = useMemo(() => getDesktop(), [])
+  const platform = desktop?.platform ?? null
+  const wakeLock = useMemo(() => createWakeLock(undefined, undefined, desktop), [desktop])
 
   const live = status.kind === 'live'
 
@@ -85,6 +97,14 @@ export default function App() {
       stopStream(streamRef.current)
       streamRef.current = null
       try {
+        // On macOS the OS grant is a separate gate in front of the browser's
+        // own, and asking for it explicitly is what raises the system prompt at
+        // a moment the user is expecting one. Without this the first Start can
+        // fail with a bare NotAllowedError and no prompt ever appearing.
+        if (desktop && (await desktop.cameraStatus()) === 'not-determined') {
+          await desktop.requestCameraAccess()
+        }
+
         let stream: MediaStream
         try {
           stream = await navigator.mediaDevices.getUserMedia(constraintsFor(wantedId, wantedMode))
@@ -147,12 +167,12 @@ export default function App() {
           setActual(null)
         })
       } catch (err) {
-        const { message, hint } = explain(err)
+        const { message, hint } = explain(err, platform)
         setStatus({ kind: 'error', message, hint })
         setActual(null)
       }
     },
-    [wakeLock],
+    [wakeLock, desktop, platform],
   )
 
   const stop = useCallback(() => {
@@ -197,20 +217,36 @@ export default function App() {
 
   // ---- fullscreen, idle cursor, keys ------------------------------------
 
+  // In a tab, full screen is the Fullscreen API on the stage element. In the
+  // app it is the window: an element full-screened inside a desktop window
+  // would still have the window's own title bar and border around it, and the
+  // window manager can take the app in and out of full screen without the page
+  // being involved at all — so the state is read from the shell, not guessed.
   useEffect(() => {
+    if (desktop) {
+      void desktop.isFullScreen().then(setFullscreen)
+      return desktop.onFullScreenChange(setFullscreen)
+    }
     const onChange = () => setFullscreen(Boolean(document.fullscreenElement))
     document.addEventListener('fullscreenchange', onChange)
     return () => document.removeEventListener('fullscreenchange', onChange)
-  }, [])
+  }, [desktop])
 
   const toggleFullscreen = useCallback(async () => {
     try {
+      if (desktop) {
+        // Asked for, not set here: on macOS the change is animated, so reading
+        // it back now reports the state it is leaving. The shell's
+        // enter/leave-full-screen event is what updates `fullscreen`.
+        await desktop.setFullScreen(!(await desktop.isFullScreen()))
+        return
+      }
       if (document.fullscreenElement) await document.exitFullscreen()
       else await stageRef.current?.requestFullscreen()
     } catch {
       /* refused (iOS Safari on an element): the page still works windowed */
     }
-  }, [])
+  }, [desktop])
 
   useEffect(() => {
     let timer: number | undefined
@@ -236,6 +272,10 @@ export default function App() {
       const target = e.target as HTMLElement | null
       if (target && /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName)) return
       if (e.key === 'f' || e.key === 'F') void toggleFullscreen()
+      // The browser handles Escape itself and mostly does not deliver the key
+      // to the page; a full-screen desktop window does, and would otherwise
+      // have no way out but the menu.
+      else if (e.key === 'Escape' && desktop && fullscreen) void toggleFullscreen()
       else if (e.key === 'm' || e.key === 'M') setSettings((s) => ({ ...s, mirror: !s.mirror }))
       else if (e.key === 'r' || e.key === 'R') setSettings((s) => ({ ...s, rotation: nextRotation(s.rotation) }))
       else if (e.key === 'c' || e.key === 'C')
@@ -243,7 +283,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [toggleFullscreen])
+  }, [toggleFullscreen, desktop, fullscreen])
 
   // The rotated-picture scale needs the stage's own aspect, not the video's.
   useEffect(() => {
@@ -285,8 +325,8 @@ export default function App() {
               <div className="card">
                 <h1>Peephole</h1>
                 <p>
-                  A camera or capture card, full screen, and nothing else. Nothing is recorded and nothing
-                  leaves this browser.
+                  A camera or capture card, full screen, and nothing else. Nothing is recorded and
+                  nothing leaves this {platform ? 'machine' : 'browser'}.
                 </p>
                 <button
                   className="primary"
@@ -295,10 +335,7 @@ export default function App() {
                 >
                   {status.kind === 'starting' ? 'Starting…' : 'Start'}
                 </button>
-                <p className="fine">
-                  The browser will ask for camera access. Device names stay hidden until it is granted —
-                  that is the browser, not this page.
-                </p>
+                <p className="fine">{startNote(platform)}</p>
               </div>
             )}
           </div>

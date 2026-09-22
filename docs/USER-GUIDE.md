@@ -1,11 +1,13 @@
 # Peephole
 
-A camera or capture card, full screen, in a browser tab.
+A camera or capture card, full screen — in a browser tab, or as a desktop app
+that runs completely offline.
 
 ## Using it
 
 Open <https://peephole.stoatworks-labs.com>, press **Start**, and allow the
-camera when the browser asks. Then **Full screen**.
+camera when the browser asks. Then **Full screen**. Or install the
+[desktop app](#the-desktop-app), where it is the same three steps.
 
 That is the whole tool. Everything below is detail you only need when something
 is not as you expect.
@@ -44,15 +46,19 @@ so the screen does not dim or sleep. Firefox, and Safari before 16.4, have no
 such lock — the readout says so, and the machine's own energy settings are then
 the only thing keeping the screen on.
 
+The desktop app has no such gap: it holds the display awake itself, on all three
+platforms, and keeps holding it when the window is behind something else.
+
 ### Things it says, and what to do about them
 
 | It says | What is happening |
 | --- | --- |
 | *The browser blocked access to the camera.* | The site is not allowed to use the camera. The padlock in the address bar is where to change it, then press Start again. |
+| *Access to the camera was blocked.* (in the app) | The operating system is refusing, not the app. It names the setting — **System Settings ▸ Privacy & Security ▸ Camera** on macOS, **Settings ▸ Privacy & security ▸ Camera** on Windows, the `video` group on Linux. |
 | *The device is there but would not open.* | Something else has it — OBS, Teams, Zoom, another tab of this page. A camera can usually only be opened once. |
 | *The device stopped.* | It was unplugged, or another application took it. Press Start. |
 | *That device is no longer there.* | The remembered device is gone; pick another from the list. |
-| *Cameras are only available on a secure page.* | You are on an `http://` address. Use the hosted page, or `localhost`. |
+| *Cameras are only available on a secure page.* | You are on an `http://` address. Use the hosted page, or `localhost`. The app never sees this one. |
 
 ### Privacy
 
@@ -68,3 +74,46 @@ browser so the page comes back the way you left it.
 No recording, no snapshots, no streaming out, and no audio. For production use
 [OBS](https://obsproject.com); to put a capture device on the network, see
 [frame-ferret](https://stoatworks-labs.com/software/frame-ferret/).
+
+## The desktop app
+
+The same tool, installed, for a machine that has no route to the internet or
+should not be using one. Downloads are on the
+[releases page](https://github.com/stoatworks-labs/peephole/releases).
+
+| | |
+| --- | --- |
+| macOS | `.dmg` — take *universal* unless you know you want the smaller *arm64* |
+| Windows | `-setup.exe` to install, `-portable.exe` to run from a USB stick |
+| Linux | `.AppImage` (download, make executable, run), `.deb`, `.rpm` |
+
+It is not a browser pointed at the website. There is no page being fetched and
+no local server; the whole application is inside the download, and it cannot
+reach the network even if you ask it to.
+
+**On macOS, the first launch will be refused.** The app is signed, but not with
+a paid Apple certificate, so Gatekeeper treats it as unidentified. After
+dragging it into Applications, open Terminal and run:
+
+```
+xattr -dr com.apple.quarantine /Applications/Peephole.app
+```
+
+Then open it normally.
+
+**The first Start asks for the camera**, and that permission belongs to the
+operating system rather than to Peephole. If you refuse it, the app cannot ask
+again — the switch is in **System Settings ▸ Privacy & Security ▸ Camera** on
+macOS, and **Settings ▸ Privacy & security ▸ Camera** on Windows. On Linux
+there is no prompt; access depends on your user being able to read the device,
+which normally means being in the `video` group.
+
+Differences from the tab, all of them small:
+
+- Full screen is the window itself, so nothing of the app is left around the
+  picture. **Esc** comes back out, as does **F**.
+- The mode list always comes from the device, on every platform. In a browser
+  that is true only in Chrome and Edge.
+- The screen stays awake everywhere, with no caveat in the readout.
+- There is no updater. A new version means downloading it, which is the point
+  on a machine that is deliberately offline.

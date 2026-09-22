@@ -1,0 +1,23 @@
+// The main and preload processes, which are Node and not the DOM.
+//
+// Separate from tsconfig.json because that one is the page: it pulls in the DOM
+// lib and Vite's client types, neither of which exist in the main process, and
+// it would happily accept a `document` reference there.
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["electron", "vite.electron.node.config.ts", "vite.electron.renderer.config.ts"]
+}

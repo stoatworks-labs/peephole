@@ -1,0 +1,102 @@
+appId: com.allansargeant.peephole
+productName: Peephole
+directories:
+  buildResources: build
+  # NOT the default `dist`. That directory is the hosted site — what `vite
+  # build` writes and what wrangler.toml hands to Cloudflare as the Worker's
+  # static assets. Packaging into it would put a 126 MB .dmg where the web
+  # build's index.html goes, and the next `npm run deploy` would upload it.
+  output: dist-desktop
+
+# An allowlist rather than the usual list of exclusions, because this app has
+# no runtime dependencies at all: React is a build-time input to the renderer
+# bundle, and the main and preload processes import nothing but `electron` and
+# Node built-ins. So the whole application is `out/` plus the manifest, and
+# nothing in node_modules ever needs to be packaged or reasoned about.
+files:
+  - out/**
+  - package.json
+
+# Linux window managers take the taskbar icon from the running window rather
+# than from the .desktop entry, so the icon has to exist as a file at runtime.
+extraResources:
+  - from: build/icon.png
+    to: icon.png
+
+mac:
+  category: public.app-category.video
+  # Every artefact name must carry ${arch}. electron-builder omits it for the
+  # primary architecture by default, so two arches overwrite each other and half
+  # the release silently goes missing. This covers the zip target, which has no
+  # block of its own below.
+  artifactName: ${name}-${version}-macos-${arch}.${ext}
+  extendInfo:
+    # Load-bearing, and it fails in the worst possible way without it: macOS
+    # terminates a process that touches the camera with no usage string at all.
+    # Not an error inside getUserMedia — the app disappears.
+    NSCameraUsageDescription: >-
+      Peephole shows the picture from a camera or capture card on this screen.
+      Nothing is recorded and nothing leaves this machine.
+  # Ad-hoc sign every target. Without this electron-builder skips signing
+  # entirely when no Developer ID is installed, and Gatekeeper on Apple Silicon
+  # then refuses the standalone arm64/x64 builds outright. scripts/release-local.sh
+  # overrides this with a real identity on a machine that has one.
+  identity: '-'
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: false
+  target:
+    - target: dmg
+      arch: [arm64, universal]
+    - target: zip
+      arch: [arm64, universal]
+dmg:
+  artifactName: ${name}-${version}-macos-${arch}.${ext}
+
+win:
+  artifactName: ${name}-${version}-windows-${arch}.${ext}
+  target:
+    - target: nsis
+      arch: [x64, arm64]
+    - target: portable
+      arch: [x64, arm64]
+nsis:
+  artifactName: ${name}-${version}-windows-${arch}-setup.${ext}
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: Peephole
+  createDesktopShortcut: always
+portable:
+  artifactName: ${name}-${version}-windows-${arch}-portable.${ext}
+
+linux:
+  artifactName: ${name}-${version}-linux-${arch}.${ext}
+  category: AudioVideo
+  # A directory of sizes, not the single build/icon.png. Handed one large PNG,
+  # electron-builder shipped a .deb containing exactly one 1024x1024 entry, so
+  # every 16- and 24-pixel slot in a panel would be scaling a megapixel image.
+  icon: build/icons
+  maintainer: Allan Sargeant <allan.sargeant@gmail.com>
+  description: A camera or capture card, full screen — offline.
+  # Desktop environments link a running window to its .desktop entry by
+  # WM_CLASS, which Electron sets from the app name. Without the two matching,
+  # the taskbar shows a generic icon and the window does not group with the
+  # launcher. Pairs with `desktopName` in package.json.
+  syncDesktopName: true
+  target:
+    - target: AppImage
+      arch: [x64, arm64]
+    - target: deb
+      arch: [x64, arm64]
+    - target: rpm
+      arch: [x64, arm64]
+appImage:
+  artifactName: ${name}-${version}-linux-${arch}.${ext}
+
+# Nothing to rebuild: there are no native modules, which is also why the
+# universal macOS merge is straightforward here and is not in the repos that
+# compile an addon.
+npmRebuild: false
+# No updater and no upload from the packager. Releases are cut by
+# .github/workflows/release.yml or by scripts/release-local.sh.
+publish: null

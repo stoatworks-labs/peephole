@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="color-scheme" content="dark" />
+    <title>Peephole</title>
+    <!--
+      The desktop app's own CSP. `'self'` is app://peephole, the scheme the main
+      process serves the bundle from.
+
+      `connect-src 'none'` is the offline promise written where a reader will
+      find it: this page cannot open an XHR, a fetch or a WebSocket at all. The
+      main process cancels http/https/ws requests as well, so the rule is
+      enforced twice, from both ends.
+
+      `media-src` carries `mediastream:` because that is what a camera track is;
+      without it the <video> element has nothing it is allowed to play.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; font-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="../../src/main.tsx"></script>
+    <!--
+      About dialog, vendored from stoatworks-backend/about and shared with the
+      hosted build through `publicDir`. Edit it there, never here.
+
+      The hosted page also loads support-footer.js; this one deliberately does
+      not. A desktop app has an About window for that, and a web footer inside
+      it would be the only thing on the page that wanted the network.
+    -->
+    <script src="./about-data.js" defer></script>
+    <script src="./about.js" defer></script>
+  </body>
+</html>

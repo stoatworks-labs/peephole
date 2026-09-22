@@ -1,0 +1,146 @@
+# Build the desktop app for Windows, macOS and Linux.
+#
+# Trigger manually (Actions ▸ release ▸ Run workflow) or by pushing a v* tag.
+# Only a tag publishes a release; a manual run leaves the artefacts on the run,
+# which is what makes it safe to dry-run a packaging change.
+#
+# There are no native modules in this repo, so both architectures build from one
+# runner per OS and the macOS universal merge is unremarkable — unlike the fleet
+# repos that compile an addon, where @electron/universal rightly refuses.
+
+name: release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux, os: ubuntu-latest, platform: "--linux" }
+          - { name: windows, os: windows-latest, platform: "--win" }
+          - { name: macos, os: macos-14, platform: "--mac" }
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # The suite covers the parts no screenshot would catch — a constraint
+      # built with `ideal` where it should be `exact` gives you a picture from
+      # the wrong camera and looks perfect.
+      - run: npm test
+
+      # build/icon.png is generated from a drawing in scripts/make-app-icon.mjs.
+      # This fails if the committed PNG is no longer what that code draws, which
+      # is the only way anyone would notice the two had parted company.
+      - run: npm run icon:check
+
+      - name: Compile
+        run: npm run electron:build
+
+      - name: Package
+        run: npx electron-builder ${{ matrix.platform }} --publish never
+
+      # An Electron app is mostly framework and helper binaries, merged one by
+      # one by @electron/universal, so checking the app binary alone would say
+      # almost nothing about what a user actually runs. Walk them all.
+      #
+      # Captured and matched with `case`, never piped into grep: steps run as
+      # `bash -eo pipefail`, so grep exiting at its first match SIGPIPEs lipo
+      # and fails the step BECAUSE the match was found.
+      - name: Verify the macOS universal build is universal
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          d=dist-desktop/mac-universal
+          [ -d "$d" ] || { echo "no $d produced" >&2; exit 1; }
+          app="$(cd "$d" && ls -d *.app 2>/dev/null | head -1)"
+          [ -n "$app" ] || { echo "no .app in $d" >&2; exit 1; }
+          found=0
+          thin=0
+          while IFS= read -r f; do
+            __archs="$( lipo -archs "$f" 2>/dev/null )" || continue
+            [ -n "$__archs" ] || continue
+            found=$((found+1))
+            case "$__archs" in
+              *arm64*) ;;
+              *) echo "no arm64 slice: ${f#$d/} ($__archs)" >&2; thin=$((thin+1)) ;;
+            esac
+            case "$__archs" in
+              *x86_64*) ;;
+              *) echo "no x86_64 slice: ${f#$d/} ($__archs)" >&2; thin=$((thin+1)) ;;
+            esac
+          done < <(find "$d/$app" -type f)
+          echo "checked $found Mach-O file(s) in $app"
+          # A walk that matched nothing would pass every check above in silence.
+          if [ "$found" -lt 1 ]; then
+            echo "found no Mach-O to check in $app" >&2
+            exit 1
+          fi
+          if [ "$thin" -gt 0 ]; then
+            echo "$thin binary/binaries are not universal" >&2
+            exit 1
+          fi
+
+      # The camera usage string is the one Info.plist key this app cannot ship
+      # without: macOS terminates a process that touches the camera without it,
+      # so the failure is the app vanishing rather than an error anyone can
+      # read. It comes from electron-builder.yml's extendInfo, which is exactly
+      # the kind of thing a config refactor drops silently.
+      - name: Verify the camera usage string survived packaging
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          app="dist-desktop/mac-universal/$(cd dist-desktop/mac-universal && ls -d *.app | head -1)"
+          plist="$app/Contents/Info.plist"
+          value="$(/usr/libexec/PlistBuddy -c 'Print :NSCameraUsageDescription' "$plist" 2>/dev/null || true)"
+          if [ -z "$value" ]; then
+            echo "::error::NSCameraUsageDescription is missing from $plist."
+            echo "::error::The packaged app would be killed by macOS the moment it opens a camera."
+            exit 1
+          fi
+          echo "NSCameraUsageDescription: $value"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: peephole-${{ matrix.name }}
+          path: |
+            dist-desktop/*.exe
+            dist-desktop/*.dmg
+            dist-desktop/*.zip
+            dist-desktop/*.deb
+            dist-desktop/*.rpm
+            dist-desktop/*.AppImage
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true

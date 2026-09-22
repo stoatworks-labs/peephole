@@ -30,3 +30,11 @@ jobs:
       - run: npm test
       # `npm run build` is `tsc -b && vite build`, so this is the type-check too.
       - run: npm run build
+      # build/icon.png is drawn by scripts/make-app-icon.mjs. Nothing else would
+      # notice if the committed PNG and the code that draws it parted company.
+      - run: npm run icon:check
+      # The desktop shell, type-checked and compiled. Not packaged — that is
+      # release.yml's job and takes forty minutes — but this is what catches a
+      # change to src/ that the Electron renderer cannot build, which is most of
+      # the ways the two shapes could drift apart.
+      - run: npm run electron:build

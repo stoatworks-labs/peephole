@@ -4,5 +4,13 @@ dist/
 *.tsbuildinfo
 .DS_Store
 
+# The Electron build. `out/` is the compiled main, preload and renderer;
+# `dist-desktop/` is where electron-builder packs installers, and it is
+# deliberately NOT `dist/` — that one is the hosted site, and is what wrangler
+# uploads to Cloudflare.
+out/
+dist-desktop/
+dist-release/
+
 # one-off scratch script, kept outside the repo
 register.py

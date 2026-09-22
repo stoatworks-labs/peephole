@@ -11,7 +11,14 @@
  *  * It does not exist in Firefox or older Safari. There is no polyfill worth
  *    having (the video-loop trick burns battery for a worse result), so the
  *    page says the screen may sleep rather than pretending otherwise.
+ *
+ * The desktop app has neither problem: Electron's powerSaveBlocker is held by
+ * the process, not by a visible document, so it survives the window being
+ * hidden or moved to another desktop and exists on all three platforms. When
+ * the bridge is there it is used instead, and `supported` is simply true.
  */
+
+import type { Desktop } from './desktop'
 
 export type WakeLock = {
   /** Take the lock, if this browser has one. Safe to call repeatedly. */
@@ -25,7 +32,28 @@ type SentinelLike = { released: boolean; release(): Promise<void>; addEventListe
 export function createWakeLock(
   nav: Navigator | undefined = typeof navigator === 'undefined' ? undefined : navigator,
   doc: Document | undefined = typeof document === 'undefined' ? undefined : document,
+  desktop: Pick<Desktop, 'keepDisplayAwake'> | null = null,
 ): WakeLock {
+  if (desktop) {
+    return {
+      supported: true,
+      async acquire() {
+        try {
+          return await desktop.keepDisplayAwake(true)
+        } catch {
+          return false
+        }
+      },
+      async release() {
+        try {
+          await desktop.keepDisplayAwake(false)
+        } catch {
+          /* the blocker is dropped on quit regardless */
+        }
+      },
+    }
+  }
+
   const api = (nav as Navigator & { wakeLock?: { request(t: 'screen'): Promise<SentinelLike> } })?.wakeLock
   let sentinel: SentinelLike | null = null
   let wanted = false

@@ -71,6 +71,10 @@ body {
   inset: 0;
   display: grid;
   place-items: center;
+  /* Two children now, the card and the About link: pack the rows together and
+     centre the pair, or each would centre itself in half the screen. */
+  align-content: center;
+  gap: 16px;
   background: radial-gradient(60% 60% at 50% 45%, #10161f 0%, #07090c 100%);
   padding: 24px;
 }
@@ -138,6 +142,26 @@ button.primary {
 button.on {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+/* The way off this page: version, licence, the guide and the source, in the
+   shared About dialog. Quiet, and below the card rather than in the control
+   bar, so nothing is added to the picture. */
+.overlay .about {
+  background: none;
+  border: 0;
+  padding: 4px 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-decoration-color: var(--edge);
+  text-underline-offset: 3px;
+}
+
+.overlay .about:hover,
+.overlay .about:focus-visible {
+  color: var(--ink);
+  text-decoration-color: currentColor;
 }
 
 /* ---- the control bar ---- */

@@ -212,11 +212,13 @@ function linuxIcon(): string | undefined {
 /**
  * The shared Stoatworks About dialog, which the page already carries.
  *
- * It is opened by clicking anything marked `data-stoatworks-about`, and this
- * app's UI has no such element — it is a picture and a control bar, with
- * nowhere sensible to put a chrome link. A menu item is where an application
- * keeps its About, so the menu calls the dialog's own global directly rather
- * than growing a bridge method and an effect in `src/` for it.
+ * It is opened by clicking anything marked `data-stoatworks-about`. The UI
+ * carries one, under the start card — but only there, because once there is a
+ * picture the card is gone and the only chrome left is the control bar, which
+ * is the picture's and not the application's. A menu item is where an
+ * application keeps its About and is reachable whatever is on screen, so the
+ * menu calls the dialog's own global directly rather than synthesising a click
+ * on an element that is not always in the DOM.
  */
 const showAbout = (): void => {
   void mainWindow?.webContents.executeJavaScript('window.stoatworksAbout?.open()')

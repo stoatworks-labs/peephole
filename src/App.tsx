@@ -338,6 +338,15 @@ export default function App() {
                 <p className="fine">{startNote(platform)}</p>
               </div>
             )}
+
+            {/* Opens the shared About dialog — see public/about.js, which delegates
+                this attribute from the document, so nothing needs importing here.
+                Under the card rather than in the control bar: this is the chrome
+                that is already gone once there is a picture, and the version, the
+                licence and the guide are a read-once thing. */}
+            <button type="button" className="about" data-stoatworks-about>
+              About
+            </button>
           </div>
         )}
 

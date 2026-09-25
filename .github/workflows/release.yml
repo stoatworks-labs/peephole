@@ -33,7 +33,7 @@ jobs:
           - { name: macos, os: macos-14, platform: "--mac" }
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v6
         with:

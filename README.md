@@ -1,6 +1,7 @@
 # Peephole
 
-> **AI-assisted project.** This codebase was created with [Claude Code](https://claude.com/claude-code).
+> **AI-assisted project.** This codebase was created with [Claude](https://claude.com/claude-code)
+> (Anthropic), directed and reviewed by a human author.
 > The design decisions, the testing and the verdicts below are a human's.
 
 A camera or capture card, full screen — in a browser tab, or as a desktop app

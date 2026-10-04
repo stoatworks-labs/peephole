@@ -10,6 +10,16 @@ pushed out by `scripts/sync-attributions.py`. Edit it there, not here.
 
 Libraries, SDKs and frameworks the project is built on or bundles.
 
+### Electron
+
+<https://www.electronjs.org>  
+Licence: MIT  
+Copyright: OpenJS Foundation and Electron contributors
+
+An npm dependency.
+
+Ships one desktop app across macOS, Windows and Linux where the UI is the product and a bundled Chromium is an acceptable trade for that reach.
+
 ### React
 
 <https://react.dev>  

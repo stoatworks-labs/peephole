@@ -33,11 +33,11 @@
     "dist:linux": "npm run electron:build && electron-builder --linux --publish never"
   },
   "devDependencies": {
-    "@types/node": "^26.4.1",
+    "@types/node": "^26.6.4",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "@vitejs/plugin-react": "^6.1.0",
-    "electron": "^44.4.5",
+    "electron": "^44.5.1",
     "electron-builder": "^26.15.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

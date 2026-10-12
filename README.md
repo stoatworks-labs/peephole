@@ -141,13 +141,14 @@ on top of that. Both halves are verified in the test run below.
 Downloads are on the [releases page](https://github.com/stoatworks-labs/peephole/releases).
 
 Every platform gets a build that runs anywhere and a smaller single-architecture
-one. If you'd rather not think about it, take the first row.
+one. If you'd rather not think about it, take the first column. The sizes are
+in the [download list](#download) above.
 
 | | Runs on anything | Smaller |
 | --- | --- | --- |
-| macOS | `macos-universal.dmg` (224 MB) | `macos-arm64.dmg` (128 MB), Apple Silicon only |
-| Windows | `windows-setup.exe` (206 MB) | `windows-x64-setup.exe` (107 MB) or `windows-arm64-setup.exe` |
-| Linux | `linux-x86_64.AppImage` (121 MB) — nothing to install | `.deb` and `.rpm`, x64 and arm64 |
+| macOS | `macos-universal.dmg` | `macos-arm64.dmg`, Apple Silicon only |
+| Windows | `windows-setup.exe` | `windows-x64-setup.exe` or `windows-arm64-setup.exe` |
+| Linux | `linux-x86_64.AppImage` — nothing to install | `.deb` and `.rpm`, x64 and arm64 |
 
 The Windows `-portable.exe` files are the same builds with no installer, for
 running from a USB stick.
@@ -246,7 +247,7 @@ in a browser with `npm run dev`, and the app has one code path (built assets
 over `app://`, with the network blocked), so it can't behave one way in
 development and another way in the build that ships.
 
-Three output directories, which is two more than is comfortable, so:
+Four output directories, which is three more than is comfortable, so:
 
 | | |
 | --- | --- |

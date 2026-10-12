@@ -2,23 +2,23 @@
 
 > **AI-assisted project.** This codebase was created with [Claude](https://claude.com/claude-code)
 > (Anthropic), directed and reviewed by a human author.
-> The design decisions, the testing and the verdicts below are a human's.
+> The design decisions, the testing and the verdicts below are mine.
 
-A camera or capture card, full screen — in a browser tab, or as a desktop app
+A camera or capture card, full screen, in a browser tab or as a desktop app
 that runs completely offline.
 
 **<https://peephole.stoatworks-labs.com>** · [Desktop app](#desktop-app)
 
-You have a camera or an HDMI capture card plugged in and you want to *look at it*
-— on a second screen, at the back of the room, on the laptop next to the desk.
+You've got a camera or an HDMI capture card plugged in and you want to *look at
+it*: on a second screen, at the back of the room, on the laptop next to the desk.
 OBS will do it, after a scene, a source, a preview, a projector output and a
-window to hide. This is the same job with nothing in front of it: open the page,
+window to hide. This is the same job with nothing in the way: open the page,
 press Start, press Full screen.
 
-Nothing is recorded, nothing is uploaded, and there is no account. The picture
-goes from the device to the screen and stops there — no server is involved, and
-there is nothing in this app that could send it anywhere. The desktop build goes
-further and cannot open a network connection at all.
+Nothing's recorded or uploaded, and there's no account. The picture goes from the
+device to the screen and stops there. No server is involved, and there's nothing
+in this app that could send it anywhere. The desktop build goes further and
+can't open a network connection at all.
 
 <!-- downloads:start -->
 
@@ -75,17 +75,17 @@ macOS builds are signed and notarised and open normally. The Windows builds are 
 ## What it does that a bare `getUserMedia` page does not
 
 - **Gives a capture card its real resolution.** A UVC card advertises a list of
-  modes, and browsers pick a conservative default from it — plug in a 1080p HDMI
+  modes, and browsers pick a conservative default from it. Plug in a 1080p HDMI
   card and you get 640 × 480, with nothing on screen to say so. Peephole asks the
   device what it can do, offers those modes, and shows what the stream actually
   settled on. If you asked for 1080p and got VGA, it says so in the readout
   rather than leaving you to wonder why the picture is soft.
 - **Keeps the screen awake.** A confidence monitor that dims after ten minutes
-  is not a confidence monitor. Where the browser has the Screen Wake Lock API,
-  the lock is held while a picture is up and re-taken when you come back to the
-  tab (browsers drop it whenever the tab is hidden). Where it does not —
-  Firefox, older Safari — the readout says the screen may still sleep, rather
-  than pretending.
+  doesn't inspire much confidence. Where the browser has the Screen Wake Lock
+  API, the lock is held while a picture is up and re-taken when you come back to
+  the tab (browsers drop it whenever the tab is hidden). Where it doesn't
+  (Firefox, older Safari), the readout says the screen may still sleep rather
+  than pretending otherwise.
 - **Comes back to the same device.** The device and mode are remembered. Ids are
   rotated whenever you reset the site's camera permission, so the name is
   remembered too and used to find the same device again; if neither matches, it
@@ -101,46 +101,47 @@ Mirror, rotate in quarter turns, and fit or fill. Keyboard: **F** full screen,
 ## Desktop app
 
 The same application, packaged with Electron for macOS, Windows and Linux. It
-needs no network at all — not to install, not to run, not ever — which is the
-point for a machine on a show network with no route out, or one that simply
-should not be talking to anything.
+needs no network at all, not to install, not to run, not ever, which is what you
+want on a machine on a show network with no route out, or one that just
+shouldn't be talking to anything.
 
-It is not a wrapper around the website. There is no `localhost` server and no
+It isn't a wrapper around the website. There's no `localhost` server and no
 hosted page being loaded; the bundle is served to the window over a registered
 `app://` scheme from inside the application itself.
 
 **Why Electron and not something lighter.** The mode picker is the reason this
-tool exists, and it is built from `getCapabilities()`, which only Chromium
+tool exists, and it's built from `getCapabilities()`, which only Chromium
 implements. A shell that used the system webview would give the real mode list
-on Windows and a guessed ladder on macOS and Linux — the same tool behaving
-differently on each desk. Electron brings its own Chromium, so all three
-platforms get the device's actual capabilities.
+on Windows and a guessed ladder on macOS and Linux, so the same tool would
+behave differently on each desk. Electron brings its own Chromium, so all three
+platforms get the device's actual capabilities. Yes, that's a hundred-odd
+megabytes to show you a camera. The mode list is worth it.
 
-What the app has that the tab does not:
+What the app has that the tab doesn't:
 
 - **Full screen is the window**, not an element inside it, so nothing of the
   application is left around the picture. **Esc** leaves it.
 - **The screen stays awake properly.** A power-save blocker held by the
-  process, rather than the Screen Wake Lock API — which Firefox does not have
-  at all and which every browser drops the moment the window is hidden.
+  process, rather than the Screen Wake Lock API, which Firefox doesn't have at
+  all and every browser drops the moment the window is hidden.
 - **No permission theatre.** No https requirement, no padlock, and when access
   is refused the message names the operating system's own setting rather than
-  an address bar the app does not have.
-- **It keeps painting when it is behind something.** Chromium throttles an
-  occluded window; a confidence monitor is usually the window you are *not*
+  an address bar the app doesn't have.
+- **It keeps painting when it's behind something.** Chromium throttles an
+  occluded window, and a confidence monitor is usually the window you're *not*
   looking at, so the app turns that off.
 
-And what it deliberately does not have: no updater, no telemetry, no analytics,
-no crash reporting. The page is served a Content-Security-Policy with
+And what it leaves out on purpose: no updater, no telemetry, no analytics, no
+crash reporting. The page is served a Content-Security-Policy with
 `connect-src 'none'`, and the main process cancels every http/https/ws request
-besides. Both halves are verified in the test run below.
+on top of that. Both halves are verified in the test run below.
 
 ### Installing
 
 Downloads are on the [releases page](https://github.com/stoatworks-labs/peephole/releases).
 
 Every platform gets a build that runs anywhere and a smaller single-architecture
-one. If you do not want to think about it, take the first row.
+one. If you'd rather not think about it, take the first row.
 
 | | Runs on anything | Smaller |
 | --- | --- | --- |
@@ -152,8 +153,8 @@ The Windows `-portable.exe` files are the same builds with no installer, for
 running from a USB stick.
 
 **The published macOS builds are Developer ID signed and notarised**, so they
-open normally — no quarantine step, no right-click-Open. A build you make
-yourself with `npm run dist` is ad-hoc signed instead (that is what
+open normally, with no quarantine step and no right-click-Open. A build you make
+yourself with `npm run dist` is ad-hoc signed instead (that's what
 `identity: '-'` in `electron-builder.yml` is for), and Gatekeeper refuses those
 on first launch unless you strip the quarantine flag:
 
@@ -164,14 +165,14 @@ xattr -dr com.apple.quarantine /Applications/Peephole.app
 Windows installers are unsigned, so SmartScreen will warn on first run.
 
 The first time you press Start, macOS and Windows will ask for camera access.
-If you say no, the app cannot ask again — the setting then lives in **System
+If you say no, the app can't ask again. The setting then lives in **System
 Settings ▸ Privacy & Security ▸ Camera** or **Settings ▸ Privacy & security ▸
-Camera**, and the app says so when it is refused.
+Camera**, and the app says so when it's refused.
 
 ## What it does not do
 
 No recording, no snapshots, no streaming out, no audio. Those are all reasonable
-things to want and all reasons to use something bigger — [OBS](https://obsproject.com)
+things to want and all reasons to use something bigger: [OBS](https://obsproject.com)
 for production, or [frame-ferret](https://github.com/stoatworks-labs/frame-ferret)
 if what you actually want is a capture device on the network. This page is for
 looking.
@@ -186,12 +187,12 @@ Firefox, desktop or mobile. Two differences worth knowing:
 | Mode list from the device | ✅ real capabilities | ladder | ladder |
 | Screen wake lock | ✅ | ✅ 16.4+ | ❌ — says so in the readout |
 
-Where the device's own capabilities are not available, the page offers a
-standard ladder (2160p down to 480p) and asks for the mode you pick; the readout
-still reports what you really got.
+Where the device's own capabilities aren't available, the page offers a
+standard ladder (2160p down to 480p) and asks for the mode you pick, and the
+readout still reports what you actually got.
 
-The page must be served over **https** or from **localhost** — browsers give no
-camera to an insecure origin.
+The page has to be served over **https** or from **localhost**, because browsers
+won't give a camera to an insecure origin.
 
 The [desktop app](#desktop-app) is the Chromium column on all three platforms,
 and has no secure-origin question to answer.
@@ -212,13 +213,13 @@ Read this as the authority on what has actually been checked.
 | Packaging | ✅ all 16 artefacts cross-built from one Mac — macOS universal + arm64, Windows x64/arm64/combined, Linux AppImage + deb + rpm on both arches. The universal gate walks all 13 Mach-O files in the bundle; the `.dmg` mounts, verifies and carries the camera usage string |
 | The Windows and Linux builds **running** | ⚠️ **not yet** — they package cleanly and the macOS one has been driven end to end, but nobody has launched the Windows or Linux artefacts on Windows or Linux |
 
-The capture-card behaviour is the whole point of the tool and is the part that
-has not met hardware. Chromium's fake device proves the code path — it really
-does report capabilities, really does renegotiate to 1080p, and the readout
-really does follow — but a fake device always gives you what you ask for, which
-is exactly what a real capture card does not. If you run it against a card, the
-thing to watch is the readout: it should name the card's real mode, and the
-warning should appear when you are handed something smaller than you asked for.
+The capture-card behaviour is what the tool is for, and it's the part that
+hasn't met hardware. Chromium's fake device proves the code path (it does report
+capabilities, it does renegotiate to 1080p, and the readout does follow), but a
+fake device always gives you what you ask for, which is just what a real capture
+card doesn't do. If you run it against a card, watch the readout: it should name
+the card's real mode, and the warning should appear when you're handed something
+smaller than you asked for. Do let me know how it goes.
 
 ## Building
 
@@ -229,7 +230,7 @@ npm run dev       # vite, on localhost
 npm run build     # tsc -b && vite build, into dist/
 ```
 
-`dist/` is a static bundle — any web server will do, and `base` is relative so
+`dist/` is a static bundle, so any web server will do, and `base` is relative so
 it also works from a subdirectory or a folder on a show laptop.
 
 ### The desktop app
@@ -240,9 +241,9 @@ npm run dist             # installers for this platform, into dist-desktop/
 npm run dist:win         # or :mac / :linux — electron-builder cross-builds
 ```
 
-There is no dev server for the desktop shell, on purpose: the UI is iterated in
-a browser with `npm run dev`, and the app has exactly one code path — built
-assets over `app://`, with the network blocked — so it cannot behave one way in
+There's no dev server for the desktop shell, on purpose. The UI gets worked on
+in a browser with `npm run dev`, and the app has one code path (built assets
+over `app://`, with the network blocked), so it can't behave one way in
 development and another way in the build that ships.
 
 Three output directories, which is two more than is comfortable, so:
@@ -258,7 +259,7 @@ Three output directories, which is two more than is comfortable, so:
 a Developer ID; `.github/workflows/release.yml` does the same on a `v*` tag,
 ad-hoc signed. Both leave `dist/` alone.
 
-`build/icon.png` is generated — `npm run icon` draws it, `npm run icon:check`
+`build/icon.png` is generated: `npm run icon` draws it, and `npm run icon:check`
 fails if the committed file is no longer what the code draws.
 
 <!-- attributions:start -->

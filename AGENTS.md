@@ -97,7 +97,7 @@ That default would drop a 126 MB .dmg into the directory wrangler serves.
 
 ## Verification
 
-`npm test` is 36 unit tests. The end-to-end pass was done by injecting a
+`npm test` is 48 unit tests. The end-to-end pass was done by injecting a
 `MediaStream` from a canvas over `navigator.mediaDevices`, which exercises
 everything but the browser's permission gate — see README's verification table
 for what has and has not met real hardware. **No real camera or capture card has

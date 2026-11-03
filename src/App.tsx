@@ -336,6 +336,15 @@ export default function App() {
                   {status.kind === 'starting' ? 'Starting…' : 'Start'}
                 </button>
                 <p className="fine">{startNote(platform)}</p>
+                {/* The hosted page only: the desktop app has its own way to the
+                    guide in the About dialog, and this is the web tool's page. */}
+                {platform ? null : (
+                  <p className="fine">
+                    <a href="https://stoatworks-labs.com/web-tools/peephole/" target="_blank" rel="noopener">
+                      Peephole on Stoatworks Labs
+                    </a>
+                  </p>
+                )}
               </div>
             )}
 

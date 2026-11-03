@@ -1,0 +1,14 @@
+# Peephole
+
+> A camera or capture card, full screen, at its real resolution
+
+Opens a webcam or an HDMI capture card full screen in a browser tab, and fixes the one thing a bare getUserMedia page gets wrong. A capture card advertises a list of modes and the browser picks a cautious one, so a card carrying 1080p opens at 640 × 480 and just looks soft. This asks the device what it can do, offers you those modes, and tells you what the stream actually settled on, including when that's smaller than what you asked for. There's mirror, quarter-turn rotation, fit or fill, a screen that stays awake while a picture's up, and a bar that fades out with the cursor in full screen. Nothing is recorded and nothing leaves the browser.
+
+It runs in the browser at https://peephole.stoatworks-labs.com/ and is free to use.
+
+## Links
+
+- [Peephole on Stoatworks Labs](https://stoatworks-labs.com/web-tools/peephole/): what it is, with links to everything else
+- [Project page](https://stoatworks-labs.com/software/peephole/)
+- [User guide](https://stoatworks-labs.com/software/peephole/guide/)
+- [Source code](https://github.com/stoatworks-labs/peephole)

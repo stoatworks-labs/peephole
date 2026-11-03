@@ -111,6 +111,10 @@ body {
   font-size: 0.85rem;
 }
 
+.card .fine a {
+  color: inherit;
+}
+
 button {
   font: inherit;
   color: var(--ink);

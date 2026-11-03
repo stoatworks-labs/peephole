@@ -20,6 +20,8 @@ device to the screen and stops there. No server is involved, and there's nothing
 in this app that could send it anywhere. The desktop build goes further and
 can't open a network connection at all.
 
+The [project page](https://stoatworks-labs.com/software/peephole/) has the downloads and the user guide, and the hosted copy has a [page of its own](https://stoatworks-labs.com/web-tools/peephole/) on Stoatworks Labs.
+
 <!-- downloads:start -->
 
 ## Download

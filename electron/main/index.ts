@@ -22,6 +22,7 @@ import {
   BrowserWindow,
   Menu,
   ipcMain,
+  nativeTheme,
   net,
   powerSaveBlocker,
   protocol,
@@ -62,6 +63,26 @@ app.setAppUserModelId('com.allansargeant.peephole')
 
 let mainWindow: BrowserWindow | null = null
 let displayBlocker: number | null = null
+
+/**
+ * What the window shows before the first paint and wherever a resize or the
+ * full-screen animation outruns the renderer: the colour of the page behind it.
+ *
+ * The start screen follows the system's light or dark setting on the shared
+ * theme's paper, so that is the colour until a picture is up. The picture sits
+ * on the theme's dark stage in both modes, so from then on the window is the
+ * stage — a paper-white edge flashing around a monitor in a dark room is the
+ * torch the background colour is there to prevent. A picture is up for exactly
+ * as long as the display blocker is held.
+ */
+function windowColour(): string {
+  if (displayBlocker !== null) return '#060e16'
+  return nativeTheme.shouldUseDarkColors ? '#0b1621' : '#fafaf8'
+}
+
+function repaintWindow(): void {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setBackgroundColor(windowColour())
+}
 
 /** Serve the built renderer from RENDERER_DIR, and nothing else from anywhere. */
 function serveRenderer(): void {
@@ -155,10 +176,9 @@ function createWindow(): BrowserWindow {
     height: 760,
     minWidth: 480,
     minHeight: 320,
-    // The app is a monitor, and its page is near-black. Without this the window
-    // is white for the moment before the first paint, which in a dark room is a
-    // torch pointed at the operator.
-    backgroundColor: '#07090c',
+    // Without this the window is white for the moment before the first paint,
+    // which in a dark room is a torch pointed at the operator.
+    backgroundColor: windowColour(),
     show: false,
     autoHideMenuBar: true,
     title: 'Peephole',
@@ -300,6 +320,7 @@ function registerIpc(): void {
       if (powerSaveBlocker.isStarted(displayBlocker)) powerSaveBlocker.stop(displayBlocker)
       displayBlocker = null
     }
+    repaintWindow()
     return displayBlocker !== null
   })
 
@@ -342,6 +363,7 @@ if (!app.requestSingleInstanceLock()) {
     lockDownPermissions(session.defaultSession)
     registerIpc()
     buildMenu()
+    nativeTheme.on('updated', repaintWindow)
 
     mainWindow = createWindow()
     mainWindow.on('closed', () => {

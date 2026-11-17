@@ -313,6 +313,21 @@ export default function App() {
 
         {!live && (
           <div className="overlay">
+            {/* The start screen's navy bar: the name, and the shared About dialog
+                (public/about.js delegates this attribute from the document, so
+                nothing needs importing here). It lives on this screen, not in the
+                control bar: this is the chrome that is already gone once there is
+                a picture, and the version, the licence and the guide are a
+                read-once thing. */}
+            <header className="sw-bar start-bar">
+              <span className="sw-brand">
+                <span className="sw-mark" aria-hidden="true">◉</span> Peephole
+              </span>
+              <button type="button" data-stoatworks-about>
+                About
+              </button>
+            </header>
+
             {status.kind === 'error' ? (
               <div className="card error" role="alert">
                 <h2>{status.message}</h2>
@@ -347,15 +362,6 @@ export default function App() {
                 )}
               </div>
             )}
-
-            {/* Opens the shared About dialog — see public/about.js, which delegates
-                this attribute from the document, so nothing needs importing here.
-                Under the card rather than in the control bar: this is the chrome
-                that is already gone once there is a picture, and the version, the
-                licence and the guide are a read-once thing. */}
-            <button type="button" className="about" data-stoatworks-about>
-              About
-            </button>
           </div>
         )}
 

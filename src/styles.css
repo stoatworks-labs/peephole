@@ -2,20 +2,23 @@
  * The picture is the interface. Everything else is a thin bar that gets out of
  * the way, and in full screen disappears with the cursor.
  *
- * Dark by default and not theme-following: this is a monitor. A white page
- * behind a camera feed in a dark room is a light source pointed at the
- * operator.
+ * Colours come from the shared Stoatworks theme (stoatworks-theme.css, imported
+ * first). The start screen follows the system's light or dark setting like every
+ * fleet tool; the picture and the control bar laid over it sit on the stage,
+ * which stays dark in both modes: this is a monitor.
  */
 
 :root {
-  --bg: #07090c;
-  --chrome: #12161c;
-  --edge: #263141;
-  --ink: #e8edf4;
-  --muted: #93a1b5;
-  --accent: #4cc9f0;
-  --warn: #f9c74f;
-  color-scheme: dark;
+  --bg: var(--sw-paper);
+  --chrome: var(--sw-card);
+  --edge: var(--sw-line);
+  --ink: var(--sw-ink);
+  --muted: var(--sw-muted);
+  --accent: var(--sw-accent);
+  --warn: var(--sw-warn);
+  /* On the stage: the same light-on-dark values in both modes. */
+  --stage-muted: color-mix(in srgb, var(--sw-stage-ink) 68%, transparent);
+  --stage-warn: #f9c74f;
 }
 
 * {
@@ -32,7 +35,7 @@ body,
 body {
   background: var(--bg);
   color: var(--ink);
-  font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font: 15px/1.45 var(--sw-font);
   overflow: hidden;
 }
 
@@ -44,7 +47,7 @@ body {
 
 .stage {
   position: relative;
-  background: #000;
+  background: var(--sw-stage);
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -60,33 +63,38 @@ body {
   width: 100%;
   height: 100%;
   display: block;
-  background: #000;
+  background: var(--sw-stage);
   transition: transform 120ms ease;
 }
 
-/* ---- the start / error card ---- */
+/* ---- the start / error screen ---- */
 
+/* The navy bar across the top, then the card centred in what is left. */
 .overlay {
   position: absolute;
   inset: 0;
   display: grid;
-  place-items: center;
-  /* Two children now, the card and the About link: pack the rows together and
-     centre the pair, or each would centre itself in half the screen. */
-  align-content: center;
-  gap: 16px;
-  background: radial-gradient(60% 60% at 50% 45%, #10161f 0%, #07090c 100%);
-  padding: 24px;
+  grid-template-rows: auto 1fr;
+  background: radial-gradient(
+    60% 60% at 50% 45%,
+    color-mix(in srgb, var(--sw-tint) 55%, var(--sw-paper)) 0%,
+    var(--sw-paper) 100%
+  );
+}
+
+.start-bar {
+  justify-content: space-between;
 }
 
 .card {
+  place-self: center;
+  margin: 24px;
   max-width: 34rem;
   text-align: center;
   background: var(--chrome);
   border: 1px solid var(--edge);
-  border-radius: 14px;
+  border-radius: var(--sw-radius);
   padding: 28px 30px;
-  box-shadow: 0 18px 50px rgb(0 0 0 / 0.45);
 }
 
 .card h1 {
@@ -118,15 +126,15 @@ body {
 button {
   font: inherit;
   color: var(--ink);
-  background: #1b2230;
+  background: var(--chrome);
   border: 1px solid var(--edge);
-  border-radius: 8px;
+  border-radius: var(--sw-radius-sm);
   padding: 7px 13px;
   cursor: pointer;
 }
 
 button:hover:not(:disabled) {
-  border-color: #3a4a61;
+  border-color: var(--accent);
 }
 
 button:disabled {
@@ -137,38 +145,31 @@ button:disabled {
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #04202b;
+  color: var(--sw-on-accent);
   font-weight: 600;
   padding: 10px 22px;
   font-size: 1.05rem;
 }
 
-button.on {
-  border-color: var(--accent);
-  color: var(--accent);
+button.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
 
-/* The way off this page: version, licence, the guide and the source, in the
-   shared About dialog. Quiet, and below the card rather than in the control
-   bar, so nothing is added to the picture. */
-.overlay .about {
-  background: none;
-  border: 0;
-  padding: 4px 8px;
-  color: var(--muted);
-  font-size: 0.85rem;
-  text-decoration: underline;
-  text-decoration-color: var(--edge);
-  text-underline-offset: 3px;
+/* The bar's About button. The bare `button` rule above is unlayered, so it beats
+   the theme's bar styles; restate them. */
+.sw-bar button {
+  background: transparent;
+  color: var(--sw-navy-ink);
+  border-color: var(--sw-navy-line);
+  padding: 4px 12px;
+  font-size: 0.9rem;
 }
 
-.overlay .about:hover,
-.overlay .about:focus-visible {
-  color: var(--ink);
-  text-decoration-color: currentColor;
+.sw-bar button:hover:not(:disabled) {
+  border-color: var(--sw-accent-soft);
 }
 
-/* ---- the control bar ---- */
+/* ---- the control bar, laid over the picture: on the stage in both modes ---- */
 
 .controls {
   position: absolute;
@@ -180,7 +181,13 @@ button.on {
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: linear-gradient(to top, rgb(7 9 12 / 0.92), rgb(7 9 12 / 0.72) 70%, transparent);
+  color: var(--sw-stage-ink);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--sw-stage) 92%, transparent),
+    color-mix(in srgb, var(--sw-stage) 72%, transparent) 70%,
+    transparent
+  );
   transition: opacity 200ms ease;
 }
 
@@ -193,30 +200,52 @@ button.on {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--muted);
+  color: var(--stage-muted);
   font-size: 0.85rem;
+}
+
+.controls button,
+.controls select {
+  color: var(--sw-stage-ink);
+  background: var(--sw-navy-tint);
+  border: 1px solid var(--sw-navy-line);
+  border-radius: var(--sw-radius-sm);
+}
+
+.controls button:hover:not(:disabled) {
+  border-color: var(--sw-accent-soft);
+}
+
+.controls button.on {
+  border-color: var(--sw-accent-soft);
+  color: var(--sw-accent-soft);
+}
+
+.controls :focus-visible {
+  outline-color: var(--sw-accent-soft);
 }
 
 .controls select {
   font: inherit;
   font-size: 0.9rem;
-  color: var(--ink);
-  background: #1b2230;
-  border: 1px solid var(--edge);
-  border-radius: 8px;
   padding: 6px 8px;
   max-width: 15rem;
 }
 
+.controls select option {
+  background: var(--sw-card);
+  color: var(--sw-ink);
+}
+
 .readout {
   margin-left: auto;
-  color: var(--muted);
+  color: var(--stage-muted);
   font-variant-numeric: tabular-nums;
   font-size: 0.9rem;
 }
 
 .readout .warn {
-  color: var(--warn);
+  color: var(--stage-warn);
   font-style: normal;
 }
 

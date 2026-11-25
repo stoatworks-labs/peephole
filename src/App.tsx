@@ -23,7 +23,7 @@ import {
   type Mode,
 } from './lib/devices'
 import { blockedHint, getDesktop, startNote, type Platform } from './lib/desktop'
-import { chooseDevice, loadSettings, nextRotation, saveSettings, transformFor, type Settings } from './lib/view'
+import { chooseDevice, loadSettings, nextRotation, rememberLabel, saveSettings, transformFor, type Settings } from './lib/view'
 import { createWakeLock } from './lib/wakelock'
 
 type Status =
@@ -108,10 +108,11 @@ export default function App() {
   edgeRef.current = settings.edge
   const armedRef = useRef(false)
   const streamRef = useRef<MediaStream | null>(null)
-  // start() needs the remembered label without taking `settings` as a
-  // dependency, which would rebuild it on every mirror or rotate.
-  const settingsRef = useRef(settings)
-  settingsRef.current = settings
+  // The name of the device last used, for start()'s fallback without taking
+  // `settings` as a dependency, which would rebuild it on every mirror or
+  // rotate. It is the name last written, not the one loaded: picking another
+  // device during a visit changes it.
+  const labelRef = useRef(settings.label)
   // null in a browser tab; the Electron shell's bridge in the desktop app.
   const desktop = useMemo(() => getDesktop(), [])
   const platform = desktop?.platform ?? null
@@ -174,7 +175,7 @@ export default function App() {
         // label is the only thing left that says which one was wanted. Switch
         // to it once — guarded by `chosen`, so this cannot ping-pong.
         if (wantedId && got?.deviceId && got.deviceId !== wantedId) {
-          const wanted = chooseDevice(found, { label: settingsRef.current.label })
+          const wanted = chooseDevice(found, { label: labelRef.current })
           if (wanted && wanted.deviceId !== chosen) {
             chosen = wanted.deviceId
             setDeviceId(chosen)
@@ -234,7 +235,8 @@ export default function App() {
   // ---- remembering ------------------------------------------------------
 
   useEffect(() => {
-    const label = devices.find((d) => d.deviceId === deviceId)?.label
+    const label = rememberLabel(devices, deviceId, labelRef.current)
+    labelRef.current = label
     const next: Settings = {
       ...settings,
       deviceId,

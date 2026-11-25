@@ -108,6 +108,24 @@ export function chooseDevice<T extends { deviceId: string; label: string }>(
 }
 
 /**
+ * The device name to remember alongside its id.
+ *
+ * Names can only be read once a stream has run, so on every fresh visit the
+ * device list starts empty. A name looked up in that empty list is nothing,
+ * and writing nothing back erased the name remembered last time before it was
+ * ever used — which is exactly the visit after a permission reset, the one the
+ * name is remembered for. So the old name stands until there is a list that
+ * actually contains the device.
+ */
+export function rememberLabel(
+  devices: { deviceId: string; label: string }[],
+  deviceId: string | undefined,
+  previous: string | undefined,
+): string | undefined {
+  return devices.find((d) => d.deviceId === deviceId)?.label || previous
+}
+
+/**
  * The CSS transform for mirror and rotation.
  *
  * Rotation is applied about the centre; at 90 and 270 the video's own box is

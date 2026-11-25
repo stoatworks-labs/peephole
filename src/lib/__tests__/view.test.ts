@@ -5,6 +5,7 @@ import {
   loadSettings,
   nextRotation,
   normaliseRotation,
+  rememberLabel,
   saveSettings,
   transformFor,
 } from '../view'
@@ -30,6 +31,29 @@ group('chooseDevice', () => {
 
   it('is undefined only when there are no devices', () => {
     expect(chooseDevice([], { deviceId: 'a' })).toBeUndefined()
+  })
+})
+
+group('rememberLabel', () => {
+  const list = [dev('a', 'FaceTime HD'), dev('b', 'Cam Link 4K')]
+
+  it('keeps the remembered name while the list is still empty', () => {
+    // Every fresh visit: no stream yet, so no names. Writing "nothing" here
+    // used to erase the name before it was ever needed.
+    expect(rememberLabel([], 'b', 'Cam Link 4K')).toBe('Cam Link 4K')
+  })
+
+  it('keeps it when the remembered id is not in the list', () => {
+    // A permission reset rotated the ids: the name is now the only key left.
+    expect(rememberLabel(list, 'gone', 'Cam Link 4K')).toBe('Cam Link 4K')
+  })
+
+  it('takes the name of the device in use once the list has it', () => {
+    expect(rememberLabel(list, 'a', 'Cam Link 4K')).toBe('FaceTime HD')
+  })
+
+  it('has nothing to keep on a first visit', () => {
+    expect(rememberLabel([], undefined, undefined)).toBeUndefined()
   })
 })
 

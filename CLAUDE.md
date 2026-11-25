@@ -16,6 +16,10 @@ No server, no storage, no network calls, in either shape.
   stream settled on. The interesting part of the app.
 - `src/lib/view.ts` — fit/mirror/rotation, the remembered settings, and the
   device-matching fallback.
+- `src/lib/bar.ts` — which edge the control bar docks to, when it auto-hides,
+  and the rules for bringing a stowed (Hide) bar back. Auto-hide and stowed are
+  deliberately different: any movement undoes the first, only the picture, H or
+  the bar's own edge undoes the second.
 - `src/lib/wakelock.ts` — the Screen Wake Lock lifecycle, or the desktop
   power-save blocker when there is one.
 - `src/lib/desktop.ts` — the page's half of the Electron bridge, and the
@@ -97,7 +101,7 @@ That default would drop a 126 MB .dmg into the directory wrangler serves.
 
 ## Verification
 
-`npm test` is 48 unit tests. The end-to-end pass was done by injecting a
+`npm test` is 72 unit tests. The end-to-end pass was done by injecting a
 `MediaStream` from a canvas over `navigator.mediaDevices`, which exercises
 everything but the browser's permission gate — see README's verification table
 for what has and has not met real hardware. **No real camera or capture card has

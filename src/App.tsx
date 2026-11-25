@@ -1,4 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import {
+  atEdge,
+  barHidden,
+  edgeForKey,
+  edgeReveal,
+  isVertical,
+  menuPlacement,
+  nearestEdge,
+  type AutoHide,
+  type Edge,
+} from './lib/bar'
 import {
   actualOf,
   constraintsFor,
@@ -74,9 +85,28 @@ export default function App() {
   const [fullscreen, setFullscreen] = useState(false)
   const [idle, setIdle] = useState(false)
   const [box, setBox] = useState({ w: 0, h: 0 })
+  // The bar. `stowed` is the Hide button and is not remembered: a bar that
+  // came back hidden after a reload would look like a bar that had gone.
+  const [stowed, setStowed] = useState(false)
+  const [hint, setHint] = useState(false)
+  const [hover, setHover] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuAt, setMenuAt] = useState<CSSProperties>({})
+  /** The edge a drag would land on, while one is in progress. */
+  const [drag, setDrag] = useState<Edge | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
+  const barRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const dragRef = useRef<{ x: number; y: number; moved: boolean } | null>(null)
+  // Read by the window-level pointer listeners, which are registered once.
+  const stowedRef = useRef(stowed)
+  stowedRef.current = stowed
+  const edgeRef = useRef(settings.edge)
+  edgeRef.current = settings.edge
+  const armedRef = useRef(false)
   const streamRef = useRef<MediaStream | null>(null)
   // start() needs the remembered label without taking `settings` as a
   // dependency, which would rebuild it on every mirror or rotate.
@@ -181,6 +211,9 @@ export default function App() {
     if (videoRef.current) videoRef.current.srcObject = null
     setActual(null)
     setStatus({ kind: 'idle' })
+    // The next Start should show its controls.
+    setStowed(false)
+    setMenuOpen(false)
     void wakeLock.release()
   }, [wakeLock])
 
@@ -213,7 +246,7 @@ export default function App() {
     saveSettings(next)
     // settings is intentionally not a dependency: this writes it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deviceId, mode, settings.fit, settings.mirror, settings.rotation, devices])
+  }, [deviceId, mode, settings.fit, settings.mirror, settings.rotation, settings.edge, settings.autoHide, devices])
 
   // ---- fullscreen, idle cursor, keys ------------------------------------
 
@@ -248,6 +281,70 @@ export default function App() {
     }
   }, [desktop])
 
+  // ---- the bar: stowing, the menu, docking -----------------------------
+
+  const stow = useCallback(() => {
+    // The pointer is on the Hide button, which is inside the reveal strip:
+    // it has to leave the strip before the strip can bring the bar back.
+    armedRef.current = false
+    setMenuOpen(false)
+    setHover(false)
+    setStowed(true)
+    setHint(true)
+    // `inert` takes focus off a hidden control in the browsers that have it;
+    // this is for the ones that do not, where Space would press it unseen.
+    ;(document.activeElement as HTMLElement | null)?.blur?.()
+  }, [])
+
+  const unstow = useCallback(() => {
+    setStowed(false)
+    setHint(false)
+  }, [])
+
+  useEffect(() => {
+    if (!hint) return
+    const t = window.setTimeout(() => setHint(false), 4000)
+    return () => window.clearTimeout(t)
+  }, [hint])
+
+  const setEdge = useCallback((edge: Edge) => setSettings((s) => ({ ...s, edge })), [])
+  const setAutoHide = useCallback((autoHide: AutoHide) => setSettings((s) => ({ ...s, autoHide })), [])
+
+  // The menu hangs off the stage, not the bar, so it is placed by measuring
+  // both — again whenever the bar moves to another edge or the window resizes.
+  useLayoutEffect(() => {
+    if (!menuOpen) return
+    const place = () => {
+      const button = menuButtonRef.current?.getBoundingClientRect()
+      const bar = barRef.current?.getBoundingClientRect()
+      const stage = stageRef.current?.getBoundingClientRect()
+      if (button && bar && stage) setMenuAt(menuPlacement(settings.edge, button, bar, stage))
+    }
+    place()
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
+  }, [menuOpen, settings.edge])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Node
+      if (menuRef.current?.contains(t) || menuButtonRef.current?.contains(t)) return
+      setMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
+  }, [menuOpen])
+
+  /** The edge nearest a pointer event, for the drag. */
+  const edgeAt = (e: { clientX: number; clientY: number }) => {
+    const r = stageRef.current?.getBoundingClientRect()
+    if (!r) return null
+    return nearestEdge(e.clientX - r.left, e.clientY - r.top, r.width, r.height)
+  }
+
+  // ---- activity: the idle timer, and bringing a stowed bar back ---------
+
   useEffect(() => {
     let timer: number | undefined
     const wake = () => {
@@ -255,23 +352,36 @@ export default function App() {
       window.clearTimeout(timer)
       timer = window.setTimeout(() => setIdle(true), 2500)
     }
+    const onMove = (e: MouseEvent) => {
+      wake()
+      if (!stowedRef.current) return
+      const inZone = atEdge(edgeRef.current, e.clientX, e.clientY, window.innerWidth, window.innerHeight)
+      const next = edgeReveal(armedRef.current, inZone)
+      armedRef.current = next.armed
+      if (next.reveal) unstow()
+    }
     wake()
-    window.addEventListener('mousemove', wake)
+    window.addEventListener('mousemove', onMove)
     window.addEventListener('keydown', wake)
     window.addEventListener('touchstart', wake)
     return () => {
       window.clearTimeout(timer)
-      window.removeEventListener('mousemove', wake)
+      window.removeEventListener('mousemove', onMove)
       window.removeEventListener('keydown', wake)
       window.removeEventListener('touchstart', wake)
     }
-  }, [])
+  }, [unstow])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null
       if (target && /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName)) return
-      if (e.key === 'f' || e.key === 'F') void toggleFullscreen()
+      // The menu first: Escape closing it must not also leave full screen.
+      if (e.key === 'Escape' && menuOpen) setMenuOpen(false)
+      else if ((e.key === 'h' || e.key === 'H') && live) {
+        if (stowedRef.current) unstow()
+        else stow()
+      } else if (e.key === 'f' || e.key === 'F') void toggleFullscreen()
       // The browser handles Escape itself and mostly does not deliver the key
       // to the page; a full-screen desktop window does, and would otherwise
       // have no way out but the menu.
@@ -283,7 +393,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [toggleFullscreen, desktop, fullscreen])
+  }, [toggleFullscreen, desktop, fullscreen, menuOpen, live, stow, unstow])
 
   // The rotated-picture scale needs the stage's own aspect, not the video's.
   useEffect(() => {
@@ -297,11 +407,25 @@ export default function App() {
 
   const transform = transformFor(settings.rotation, settings.mirror, box)
   const downscaled = isDownscaled(mode, actual)
-  const chromeHidden = live && idle && fullscreen
+  const held = hover || menuOpen || drag !== null
+  const hidden = barHidden({ stowed, autoHide: settings.autoHide, fullscreen, idle, held })
+  // The pointer goes with the bar, and in full screen with stillness whatever
+  // the bar is doing — but never while it is resting on the bar itself.
+  const noCursor = live && idle && !held && (fullscreen || hidden)
+  const edge = settings.edge
+  const coarse = useMemo(() => window.matchMedia?.('(pointer: coarse)').matches ?? false, [])
 
   return (
     <div className="app">
-      <div ref={stageRef} className={`stage ${chromeHidden ? 'no-cursor' : ''}`}>
+      <div
+        ref={stageRef}
+        className={`stage ${noCursor ? 'no-cursor' : ''}`}
+        // A stowed bar is not under the pointer to click, so the picture is
+        // the way back that works with a mouse and a finger alike.
+        onClick={() => {
+          if (live && stowed) unstow()
+        }}
+      >
         <video
           ref={videoRef}
           className="picture"
@@ -366,7 +490,65 @@ export default function App() {
         )}
 
         {live && (
-          <div className={`controls ${chromeHidden ? 'hidden' : ''}`}>
+          <div
+            ref={barRef}
+            className={[
+              'controls',
+              `edge-${edge}`,
+              isVertical(edge) ? 'vertical' : '',
+              hidden ? 'hidden' : '',
+              drag ? 'dragging' : '',
+            ].join(' ')}
+            // Stowed is gone, not just transparent: nothing in it can be
+            // tabbed to or pressed without being seen.
+            inert={stowed}
+            onPointerEnter={(e) => {
+              if (e.pointerType === 'mouse') setHover(true)
+            }}
+            onPointerLeave={() => setHover(false)}
+          >
+            <button
+              type="button"
+              className="grip"
+              aria-label="Move the bar"
+              title="Drag to another edge of the screen, or use the arrow keys"
+              onPointerDown={(e) => {
+                if (e.button !== 0) return
+                e.currentTarget.setPointerCapture(e.pointerId)
+                dragRef.current = { x: e.clientX, y: e.clientY, moved: false }
+              }}
+              onPointerMove={(e) => {
+                const d = dragRef.current
+                if (!d) return
+                // A few pixels of slack, so a click on the handle is not a drag.
+                if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return
+                d.moved = true
+                setMenuOpen(false)
+                setDrag(edgeAt(e))
+              }}
+              onPointerUp={(e) => {
+                const d = dragRef.current
+                dragRef.current = null
+                const to = d?.moved ? edgeAt(e) : null
+                if (to) setEdge(to)
+                setDrag(null)
+              }}
+              onPointerCancel={() => {
+                dragRef.current = null
+                setDrag(null)
+              }}
+              onKeyDown={(e) => {
+                const to = edgeForKey(e.key)
+                if (!to) return
+                e.preventDefault()
+                setEdge(to)
+              }}
+            >
+              <svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true">
+                {[2, 8].map((x) => [3, 8, 13].map((y) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.6" />))}
+              </svg>
+            </button>
+
             <label>
               <span>Device</span>
               <select
@@ -427,6 +609,87 @@ export default function App() {
               )}
               {!wakeLock.supported && <em className="warn"> — this browser may still sleep the screen</em>}
             </span>
+
+            <span className="bar-tools">
+              <button
+                ref={menuButtonRef}
+                type="button"
+                className={menuOpen ? 'on' : ''}
+                aria-haspopup="dialog"
+                aria-expanded={menuOpen}
+                title="Where the bar sits, and when it hides"
+                onClick={() => setMenuOpen((o) => !o)}
+              >
+                Bar
+              </button>
+              <button
+                type="button"
+                title={coarse ? 'Hide the bar. Tap the picture to bring it back.' : 'Hide the bar (H). Click the picture, press H, or push the pointer against this edge to bring it back.'}
+                onClick={stow}
+              >
+                Hide
+              </button>
+            </span>
+          </div>
+        )}
+
+        {live && menuOpen && (
+          <div ref={menuRef} className="bar-menu" role="dialog" aria-label="Bar" style={menuAt}>
+            <div className="bar-menu-row">
+              <span className="bar-menu-label" id="bar-pos">
+                Position
+              </span>
+              <div className="dpad" role="group" aria-labelledby="bar-pos">
+                {(['top', 'left', 'right', 'bottom'] as const).map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    className={`dpad-${e} ${edge === e ? 'on' : ''}`}
+                    aria-pressed={edge === e}
+                    onClick={() => setEdge(e)}
+                  >
+                    {e[0].toUpperCase() + e.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="bar-menu-row">
+              <span className="bar-menu-label" id="bar-auto">
+                Auto-hide
+              </span>
+              <div className="seg" role="group" aria-labelledby="bar-auto">
+                {(
+                  [
+                    ['never', 'Never'],
+                    ['fullscreen', 'In full screen'],
+                    ['always', 'Always'],
+                  ] as const
+                ).map(([value, words]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={settings.autoHide === value ? 'on' : ''}
+                    aria-pressed={settings.autoHide === value}
+                    onClick={() => setAutoHide(value)}
+                  >
+                    {words}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="bar-menu-fine">Or drag the bar by its handle. H hides it.</p>
+          </div>
+        )}
+
+        {drag && <div className={`dock-preview edge-${drag}`} aria-hidden="true" />}
+
+        {live && (
+          <div className={`bar-hint edge-${edge} ${hint ? 'show' : ''}`} role="status">
+            {hint
+              ? coarse
+                ? 'Bar hidden. Tap the picture to bring it back.'
+                : 'Bar hidden. Click the picture or press H to bring it back.'
+              : ''}
           </div>
         )}
       </div>

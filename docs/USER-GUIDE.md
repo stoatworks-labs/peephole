@@ -12,21 +12,41 @@ camera when the browser asks. Then **Full screen**. Or install the
 That's the whole tool. Everything below is detail you only need when something
 isn't what you expected.
 
-### The bar along the bottom
+### The bar
+
+It starts along the bottom, and can sit along any edge.
 
 | | |
 | --- | --- |
+| **⠿ handle** | Drag it to another edge of the screen; the edge it will land on lights up. With the handle selected, the arrow keys move the bar too. |
 | **Device** | Every video input the browser can see — built-in cameras, USB cameras, and HDMI capture cards, which appear here like any other camera. |
 | **Mode** | The resolution to ask the device for. *Whatever the device offers* lets the browser choose. |
 | **Fit / Fill** | *Fit* shows the whole picture with bars where the shapes differ. *Fill* crops it to the screen. |
 | **Mirror** | Flips left to right — what you want when someone is using it to look at themselves, and not what you want for reading anything on screen. |
 | **0° / 90° / …** | Quarter turns, for a camera mounted on its side or a portrait screen. |
-| **Readout** | What the device actually settled on, on the right. |
+| **Readout** | What the device actually settled on. |
+| **Bar** | Which edge the bar sits on, and when it hides itself (below). |
+| **Hide** | Puts the bar away until you ask for it back. |
 
-Keyboard: **F** full screen, **M** mirror, **R** rotate, **C** fit or fill.
+Keyboard: **F** full screen, **M** mirror, **R** rotate, **C** fit or fill,
+**H** hide or show the bar.
 
-In full screen the bar and the mouse pointer fade after a couple of seconds of
-stillness, and come back as soon as you move.
+#### Getting the bar out of the way
+
+There are two ways, and they behave differently on purpose.
+
+**Auto-hide** fades the bar and the mouse pointer after a couple of seconds of
+stillness, and brings them back as soon as you move. Under **Bar**, choose when:
+*Never*, *In full screen* (the default) or *Always*. It never fades while the
+pointer is resting on it.
+
+**Hide** puts it away properly: moving the mouse does not bring it back, so a
+knocked mouse on a show machine doesn't put controls over the picture. To get it
+back, click or tap the picture, press **H**, or push the pointer against the
+edge the bar lives on.
+
+Where the bar sits and when it auto-hides are remembered. Hide is not: the bar
+is always there when you press Start.
 
 ### Why the picture might be soft
 

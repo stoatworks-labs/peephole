@@ -1,6 +1,7 @@
 /*
  * The picture is the interface. Everything else is a thin bar that gets out of
- * the way, and in full screen disappears with the cursor.
+ * the way: along whichever edge suits the screen, fading with the cursor in
+ * full screen, or hidden outright.
  *
  * Colours come from the shared Stoatworks theme (stoatworks-theme.css, imported
  * first). The start screen follows the system's light or dark setting like every
@@ -171,11 +172,12 @@ button.primary:hover:not(:disabled) {
 
 /* ---- the control bar, laid over the picture: on the stage in both modes ---- */
 
+/* It sits along whichever edge was chosen. Each edge says which way its fade
+   runs (towards the middle of the picture) and which way it slides when it
+   goes, so one set of rules below serves all four. */
 .controls {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -183,17 +185,310 @@ button.primary:hover:not(:disabled) {
   padding: 10px 14px;
   color: var(--sw-stage-ink);
   background: linear-gradient(
-    to top,
+    var(--bar-fade),
     color-mix(in srgb, var(--sw-stage) 92%, transparent),
     color-mix(in srgb, var(--sw-stage) 72%, transparent) 70%,
     transparent
   );
-  transition: opacity 200ms ease;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.controls.edge-bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  --bar-fade: to top;
+  --bar-away: translateY(12px);
+}
+
+.controls.edge-top {
+  left: 0;
+  right: 0;
+  top: 0;
+  --bar-fade: to bottom;
+  --bar-away: translateY(-12px);
+}
+
+.controls.edge-left {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  /* The inner side is the fade, so the controls stop short of it. */
+  padding: 14px 30px 14px 12px;
+  --bar-fade: to right;
+  --bar-away: translateX(-12px);
+}
+
+.controls.edge-right {
+  top: 0;
+  bottom: 0;
+  right: 0;
+  padding: 14px 12px 14px 30px;
+  --bar-fade: to left;
+  --bar-away: translateX(12px);
+}
+
+/* Down the side: one column, every control the column's width, and the
+   readout and the bar's own buttons pushed to the far end. A short window
+   scrolls the column rather than losing the end of it. */
+.controls.vertical {
+  width: 16rem;
+  max-width: 85%;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  overflow-y: auto;
+  background: linear-gradient(
+    var(--bar-fade),
+    color-mix(in srgb, var(--sw-stage) 92%, transparent),
+    color-mix(in srgb, var(--sw-stage) 80%, transparent) 82%,
+    transparent
+  );
+}
+
+.controls.vertical label {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.controls.vertical select {
+  max-width: none;
+  width: 100%;
 }
 
 .controls.hidden {
   opacity: 0;
   pointer-events: none;
+  transform: var(--bar-away);
+}
+
+/* The handle the bar is dragged by. */
+.controls .grip {
+  display: grid;
+  place-items: center;
+  padding: 6px 5px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--stage-muted);
+  cursor: grab;
+  touch-action: none;
+}
+
+.controls .grip svg {
+  fill: currentColor;
+  display: block;
+}
+
+.controls .grip:hover {
+  color: var(--sw-stage-ink);
+}
+
+.controls.vertical .grip {
+  align-self: center;
+  padding: 3px 10px;
+}
+
+.controls.vertical .grip svg {
+  transform: rotate(90deg);
+}
+
+.controls.dragging,
+.controls.dragging .grip {
+  cursor: grabbing;
+}
+
+.bar-tools {
+  display: flex;
+  gap: 6px;
+}
+
+.controls.vertical .bar-tools > button {
+  flex: 1;
+}
+
+/* ---- the bar's menu: where it sits, and when it hides ---- */
+
+/* Placed against the stage by the component (menuPlacement in lib/bar.ts):
+   opening away from the bar's edge, clear of it, lined up with its button. */
+.bar-menu {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  gap: 14px;
+  padding: 14px 16px 12px;
+  max-width: calc(100% - 16px);
+  color: var(--sw-stage-ink);
+  background: color-mix(in srgb, var(--sw-stage) 96%, transparent);
+  border: 1px solid var(--sw-navy-line);
+  border-radius: var(--sw-radius);
+  box-shadow: 0 12px 36px rgb(0 0 0 / 0.5);
+}
+
+.bar-menu-row {
+  display: grid;
+  gap: 6px;
+}
+
+.bar-menu-label {
+  color: var(--stage-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+.bar-menu button {
+  color: var(--sw-stage-ink);
+  background: var(--sw-navy-tint);
+  border: 1px solid var(--sw-navy-line);
+  border-radius: var(--sw-radius-sm);
+  padding: 5px 11px;
+  font-size: 0.9rem;
+}
+
+.bar-menu button:hover:not(:disabled) {
+  border-color: var(--sw-accent-soft);
+}
+
+.bar-menu button.on {
+  border-color: var(--sw-accent-soft);
+  color: var(--sw-accent-soft);
+  background: color-mix(in srgb, var(--sw-accent-soft) 14%, transparent);
+}
+
+.bar-menu :focus-visible {
+  outline-color: var(--sw-accent-soft);
+}
+
+/* The four edges as a cross, so the choice is where it looks like. */
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  grid-template-areas:
+    '.    top    .'
+    'left .      right'
+    '.    bottom .';
+  gap: 4px;
+  justify-content: start;
+}
+
+.dpad-top {
+  grid-area: top;
+}
+
+.dpad-left {
+  grid-area: left;
+}
+
+.dpad-right {
+  grid-area: right;
+}
+
+.dpad-bottom {
+  grid-area: bottom;
+}
+
+.seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.bar-menu-fine {
+  margin: 0;
+  color: var(--stage-muted);
+  font-size: 0.8rem;
+}
+
+/* ---- while dragging: where the bar will land ---- */
+
+.dock-preview {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--sw-accent-soft) 30%, transparent);
+  border: 2px solid var(--sw-accent-soft);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.5);
+  border-radius: var(--sw-radius);
+}
+
+.dock-preview.edge-bottom {
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  height: 58px;
+}
+
+.dock-preview.edge-top {
+  left: 6px;
+  right: 6px;
+  top: 6px;
+  height: 58px;
+}
+
+.dock-preview.edge-left {
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  width: min(16rem, 85%);
+}
+
+.dock-preview.edge-right {
+  top: 6px;
+  bottom: 6px;
+  right: 6px;
+  width: min(16rem, 85%);
+}
+
+/* ---- the note that says how to get a hidden bar back ---- */
+
+.bar-hint {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  max-width: min(26rem, calc(100% - 32px));
+  padding: 8px 14px;
+  border-radius: var(--sw-radius);
+  color: var(--sw-stage-ink);
+  background: color-mix(in srgb, var(--sw-stage) 88%, transparent);
+  border: 1px solid var(--sw-navy-line);
+  font-size: 0.9rem;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.bar-hint:empty {
+  display: none;
+}
+
+.bar-hint.show {
+  opacity: 1;
+}
+
+.bar-hint.edge-bottom {
+  bottom: 16px;
+  left: 50%;
+  translate: -50% 0;
+}
+
+.bar-hint.edge-top {
+  top: 16px;
+  left: 50%;
+  translate: -50% 0;
+}
+
+.bar-hint.edge-left {
+  left: 16px;
+  top: 50%;
+  translate: 0 -50%;
+}
+
+.bar-hint.edge-right {
+  right: 16px;
+  top: 50%;
+  translate: 0 -50%;
 }
 
 .controls label {
@@ -249,8 +544,13 @@ button.primary:hover:not(:disabled) {
   font-style: normal;
 }
 
+.controls.vertical .readout {
+  margin-left: 0;
+  margin-top: auto;
+}
+
 @media (max-width: 640px) {
-  .readout {
+  .controls:not(.vertical) .readout {
     margin-left: 0;
     width: 100%;
   }

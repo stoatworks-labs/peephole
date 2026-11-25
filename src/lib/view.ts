@@ -2,6 +2,8 @@
  * How the picture sits on the screen, and what is remembered between visits.
  */
 
+import { normaliseAutoHide, normaliseEdge, type AutoHide, type Edge } from './bar'
+
 export type Fit = 'contain' | 'cover'
 export type Rotation = 0 | 90 | 180 | 270
 
@@ -16,12 +18,18 @@ export type Settings = {
   fit: Fit
   mirror: boolean
   rotation: Rotation
+  /** Which edge of the screen the control bar sits along. */
+  edge: Edge
+  /** When the bar fades on its own. Stowing it with Hide is not remembered. */
+  autoHide: AutoHide
 }
 
 export const DEFAULTS: Settings = {
   fit: 'contain',
   mirror: false,
   rotation: 0,
+  edge: 'bottom',
+  autoHide: 'fullscreen',
 }
 
 const KEY = 'peephole.settings.v1'
@@ -37,6 +45,8 @@ export function loadSettings(storage: Pick<Storage, 'getItem'> | undefined = saf
       fit: parsed.fit === 'cover' ? 'cover' : 'contain',
       mirror: Boolean(parsed.mirror),
       rotation: normaliseRotation(parsed.rotation),
+      edge: normaliseEdge(parsed.edge),
+      autoHide: normaliseAutoHide(parsed.autoHide),
     }
   } catch {
     // A blocked or full store is not a reason to refuse to show a picture.

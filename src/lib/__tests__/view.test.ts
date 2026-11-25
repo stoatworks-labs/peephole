@@ -101,6 +101,37 @@ group('settings', () => {
     expect(loadSettings(store())).toEqual(DEFAULTS)
   })
 
+  it('puts the bar at the bottom, auto-hiding in full screen only, by default', () => {
+    expect(DEFAULTS.edge).toBe('bottom')
+    expect(DEFAULTS.autoHide).toBe('fullscreen')
+  })
+
+  it('remembers where the bar is and when it hides', () => {
+    const s = store()
+    saveSettings({ ...DEFAULTS, edge: 'right', autoHide: 'always' }, s)
+    const back = loadSettings(s)
+    expect(back.edge).toBe('right')
+    expect(back.autoHide).toBe('always')
+  })
+
+  it('reads a store from before the bar could move as the old behaviour', () => {
+    // Everything saved before this change: no edge, no autoHide.
+    const s = store()
+    s.setItem('peephole.settings.v1', JSON.stringify({ fit: 'cover', mirror: true, rotation: 90 }))
+    const back = loadSettings(s)
+    expect(back.edge).toBe('bottom')
+    expect(back.autoHide).toBe('fullscreen')
+    expect(back.fit).toBe('cover')
+  })
+
+  it('does not trust a stored edge or auto-hide either', () => {
+    const s = store()
+    s.setItem('peephole.settings.v1', JSON.stringify({ edge: 'diagonal', autoHide: 'sometimes' }))
+    const back = loadSettings(s)
+    expect(back.edge).toBe('bottom')
+    expect(back.autoHide).toBe('fullscreen')
+  })
+
   it('does not trust what it reads back', () => {
     const s = store()
     s.setItem('peephole.settings.v1', JSON.stringify({ fit: 'sideways', rotation: 37, mirror: 'yes' }))

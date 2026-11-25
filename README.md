@@ -94,11 +94,14 @@ macOS builds are signed and notarised and open normally. The Windows builds are 
   falls back to any camera and tells you which one rather than showing an error.
 - **Says what went wrong in words.** "Something else usually has it: OBS, Teams,
   Zoom, or another tab of this page" beats `NotReadableError`.
-- **Gets out of the way.** In full screen the bar and the cursor fade after a
-  couple of seconds of stillness.
+- **Gets out of the way.** The bar docks to any edge of the screen (drag its
+  handle, or pick under **Bar**). It auto-hides with the cursor after a couple
+  of seconds of stillness, in full screen by default or always if you prefer,
+  and **Hide** puts it away until you click the picture, press **H** or push the
+  pointer against its edge. A knocked mouse doesn't bring a hidden bar back.
 
 Mirror, rotate in quarter turns, and fit or fill. Keyboard: **F** full screen,
-**M** mirror, **R** rotate, **C** fit/fill.
+**M** mirror, **R** rotate, **C** fit/fill, **H** hide or show the bar.
 
 ## Desktop app
 
@@ -207,7 +210,7 @@ Read this as the authority on what has actually been checked.
 | | |
 | --- | --- |
 | Unit tests | ✅ 48, covering constraint shape, capability filtering, the remembered-device fallback, rotation maths, the wake-lock lifecycle and the desktop bridge |
-| Driven end to end in a browser | ✅ against an injected `MediaStream` — device switch, mode change, mirror, rotate, fit/fill, keyboard, stop, and settings surviving a restart |
+| Driven end to end in a browser | ✅ against an injected `MediaStream` — device switch, mode change, mirror, rotate, fit/fill, keyboard, stop, settings surviving a restart, and the bar on all four edges (menu, handle drag, arrow keys), Hide and each way back, and auto-hide (*Always* windowed; *In full screen* and *Never* against a simulated full screen, since the pane refuses a real one) |
 | Driven end to end in the **desktop app** | ✅ against Chromium's fake capture device — Start, the device picker built from real labels, a mode change to 1920 × 1080 confirmed at the `<video>` element, the readout, window full screen through the shell, and settings persisting on the `app://` origin |
 | The app cannot reach the network | ✅ `fetch` and an `<img>` to an https origin both refused from inside the page; a navigation away from `app://` refused by the main process |
 | Against a **real camera** | ⚠️ **not yet, in either shape** — the automated browser this was built in blocks camera access by policy |
